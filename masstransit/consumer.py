@@ -28,12 +28,14 @@ class RabbitMQConsumer(object):
 
     """
 
-    EXCHANGE = "getting-started"
-    EXCHANGE_TYPE = ExchangeType.fanout
-    QUEUE = "getting-started"
-    ROUTING_KEY = "example.text"
-
-    def __init__(self, amqp_url):
+    def __init__(
+        self,
+        amqp_url: str,
+        exchange: str,
+        exchange_type: ExchangeType,
+        queue: str,
+        routing_key: str,
+    ):
         """Create a new instance of the consumer class, passing in the AMQP
         URL used to connect to RabbitMQ.
 
@@ -48,6 +50,10 @@ class RabbitMQConsumer(object):
         self._closing = False
         self._consumer_tag = None
         self._url = amqp_url
+        self._queue = queue
+        self._exchange = exchange
+        self._exchange_type = exchange_type
+        self._routing_key = routing_key
         self._consuming = False
         # In production, experiment with higher prefetch values
         # for higher consumer throughput
@@ -159,7 +165,7 @@ class RabbitMQConsumer(object):
         logger.info("Channel opened")
         self._channel = channel
         self.add_on_channel_close_callback()
-        self.setup_exchange(self.EXCHANGE)
+        self.setup_exchange(self._exchange)
 
     def add_on_channel_close_callback(self):
         """This method tells pika to call the on_channel_closed method if
@@ -199,7 +205,7 @@ class RabbitMQConsumer(object):
         cb = functools.partial(self.on_exchange_declareok, userdata=exchange_name)
         self._channel.exchange_declare(
             exchange=exchange_name,
-            exchange_type=self.EXCHANGE_TYPE,
+            exchange_type=self._exchange_type,
             durable=True,
             callback=cb,
         )
@@ -215,7 +221,7 @@ class RabbitMQConsumer(object):
           userdata:
         """
         logger.info("Exchange declared: %s", userdata)
-        self.setup_queue(self.QUEUE)
+        self.setup_queue(self._queue)
 
     def setup_queue(self, queue_name):
         """Setup the queue on RabbitMQ by invoking the Queue.Declare RPC
@@ -251,11 +257,11 @@ class RabbitMQConsumer(object):
         """
         queue_name = userdata
         logger.info(
-            "Binding %s to %s with %s", self.EXCHANGE, queue_name, self.ROUTING_KEY
+            "Binding %s to %s with %s", self._exchange, queue_name, self._routing_key
         )
         cb = functools.partial(self.on_bindok, userdata=queue_name)
         self._channel.queue_bind(
-            queue_name, self.EXCHANGE, routing_key=self.ROUTING_KEY, callback=cb
+            queue_name, self._exchange, routing_key=self._routing_key, callback=cb
         )
 
     def on_bindok(self, _unused_frame, userdata):
@@ -310,7 +316,7 @@ class RabbitMQConsumer(object):
         """
         logger.info("Issuing consumer related RPC commands")
         self.add_on_cancel_callback()
-        self._consumer_tag = self._channel.basic_consume(self.QUEUE, self.on_message)
+        self._consumer_tag = self._channel.basic_consume(self._queue, self.on_message)
         self.was_consuming = True
         self._consuming = True
 
@@ -452,10 +458,21 @@ class ReconnectingRabbitMQConsumer(object):
     RabbitMQConsumer indicates that a reconnect is necessary.
     """
 
-    def __init__(self, amqp_url):
+    def __init__(
+        self,
+        amqp_url: str,
+        exchange: str,
+        exchange_type: ExchangeType,
+        queue: str,
+        routing_key: str,
+    ):
         self._reconnect_delay = 0
         self._amqp_url = amqp_url
-        self._consumer = RabbitMQConsumer(self._amqp_url)
+        self._exchange = exchange
+        self._exchange_type = exchange_type
+        self._queue = queue
+        self._routing_key = routing_key
+        self._connect_consumer()
 
     def run(self):
         """Run the consumer loop."""
@@ -473,7 +490,16 @@ class ReconnectingRabbitMQConsumer(object):
             reconnect_delay = self._get_reconnect_delay()
             logger.info("Reconnecting after %d seconds", reconnect_delay)
             time.sleep(reconnect_delay)
-            self._consumer = RabbitMQConsumer(self._amqp_url)
+            self._connect_consumer()
+
+    def _connect_consumer(self):
+        self._consumer = RabbitMQConsumer(
+            self._amqp_url,
+            self._exchange,
+            self._exchange_type,
+            self._queue,
+            self._routing_key,
+        )
 
     def _get_reconnect_delay(self):
         if self._consumer.was_consuming:

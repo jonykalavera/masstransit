@@ -9,6 +9,7 @@ from pydantic import BaseModel
 
 class Host(BaseModel):
     """MassTransit message host model"""
+
     machineName: str
     processName: str
     processId: int
@@ -21,6 +22,7 @@ class Host(BaseModel):
 
 class Message(BaseModel):
     """MassTransit message model"""
+
     messageId: str
     requestId: None
     correlationId: None
@@ -32,7 +34,7 @@ class Message(BaseModel):
     faultAddress: None
     messageType: list[str]
     message: dict[str, Any]
-    expirationTime: str| None
+    expirationTime: str | None
     sentTime: str
     headers: dict[str, Any]
     host: Host
