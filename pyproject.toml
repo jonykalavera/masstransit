@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "masstransit"
+version = "0.1.0"
+description = "MassTransit for python."
+authors = ["Jony Kalavera <mr.jony@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+pika = "^1.3.2"
+pydantic = "^2.7.4"
+python-dateutil = "^2.9.0.post0"
+
+[tool.poetry.group.dev.dependencies]
+ruff = "*"
+pytest = "*"
+mypy = "*"
+datamodel-code-generator = "^0.25.7"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
