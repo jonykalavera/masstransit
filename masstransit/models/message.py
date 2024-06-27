@@ -24,14 +24,14 @@ class Message(BaseModel):
     """MassTransit message model"""
 
     messageId: str
-    requestId: None
-    correlationId: None
+    requestId: str | None
+    correlationId: str | None
     conversationId: str
-    initiatorId: None
-    sourceAddress: str
+    initiatorId: str | None
+    sourceAddress: str | None
     destinationAddress: str
-    responseAddress: None
-    faultAddress: None
+    responseAddress: str | None
+    faultAddress: str | None
     messageType: list[str]
     message: dict[str, Any]
     expirationTime: str | None

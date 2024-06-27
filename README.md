@@ -7,9 +7,9 @@ POC status.
 ## Consumer
 
 ```shell
-$ poetry run python -m masstransit consumer --help
+$ poetry run python -m masstransit consume --help
 
- Usage: python -m masstransit consumer [OPTIONS] EXCHANGE QUEUE
+ Usage: python -m masstransit consume [OPTIONS] EXCHANGE QUEUE
 
  Start a message consumer
 

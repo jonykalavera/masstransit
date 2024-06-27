@@ -17,6 +17,7 @@ ruff = "*"
 pytest = "*"
 mypy = "*"
 datamodel-code-generator = "^0.25.7"
+pytest-mock = "^3.14.0"
 
 [build-system]
 requires = ["poetry-core"]

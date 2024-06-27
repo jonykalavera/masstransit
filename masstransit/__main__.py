@@ -20,7 +20,7 @@ def logging_setup():
 
 
 @app.command()
-def consumer(
+def consume(
     exchange: str,
     queue: str,
     url="amqp://guest:guest@localhost:5672/%2F",
