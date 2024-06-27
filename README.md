@@ -4,33 +4,23 @@ MassTransit for python.
 
 POC status.
 
-## Quick start
+## Consumer
 
-For this quick start, we recommend running the preconfigured Docker image maintained by the MassTransit team. The container image includes the delayed exchange plug-in and the management interface is enabled.
-
-```
-$ docker run -p 15672:15672 -p 5672:5672 masstransit/rabbitmq
-```
-Once its up and running you can sign in to the management UI with the username guest and password guest. You can see message rates, exchange bindings, and active consumers using the management interface.
-
-Start the consumer
-
-```
+```shell
 $ poetry run python -m masstransit consumer --help
 
  Usage: python -m masstransit consumer [OPTIONS] EXCHANGE QUEUE
 
  Start a message consumer
 
-╭─ Arguments ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ *    exchange      TEXT  [default: None] [required]                                                                                                                                        │
-│ *    queue         TEXT  [default: None] [required]                                                                                                                                        │
-╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭─ Options ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ --url                  TEXT                           [default: amqp://guest:guest@localhost:5672/%2F]                                                                                     │
-│ --exchange-type        [direct|fanout|headers|topic]  [default: fanout]                                                                                                                    │
-│ --routing-key          TEXT                           [default: example.text]                                                                                                              │
-│ --help                                                Show this message and exit.                                                                                                          │
-╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-
+╭─ Arguments ───────────────────────────────────────────────────────────────────────────────────────────────╮
+│ *    exchange      TEXT  [default: None] [required]                                                       │
+│ *    queue         TEXT  [default: None] [required]                                                       │
+╰───────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─ Options ─────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ --url                  TEXT                           [default: amqp://guest:guest@localhost:5672/%2F]    │
+│ --exchange-type        [direct|fanout|headers|topic]  [default: fanout]                                   │
+│ --routing-key          TEXT                           [default: example.text]                             │
+│ --help                                                Show this message and exit.                         │
+╰───────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ```
