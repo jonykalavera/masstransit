@@ -25,7 +25,7 @@ def consume(
     queue: str,
     url="amqp://guest:guest@localhost:5672/%2F",
     exchange_type: ExchangeType = ExchangeType.fanout,
-    routing_key: str = "example.text",
+    routing_key: str | None = None,
 ):
     """Start a message consumer"""
     ReconnectingRabbitMQConsumer(

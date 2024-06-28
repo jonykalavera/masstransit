@@ -34,7 +34,7 @@ class RabbitMQConsumer(object):
         exchange: str,
         exchange_type: ExchangeType,
         queue: str,
-        routing_key: str,
+        routing_key: str | None,
     ):
         """Create a new instance of the consumer class, passing in the AMQP
         URL used to connect to RabbitMQ.
@@ -464,7 +464,7 @@ class ReconnectingRabbitMQConsumer(object):
         exchange: str,
         exchange_type: ExchangeType,
         queue: str,
-        routing_key: str,
+        routing_key: str | None,
         consumer_class=RabbitMQConsumer,
     ):
         self._reconnect_delay = 0
