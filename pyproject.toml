@@ -25,6 +25,7 @@ ruff = "*"
 pytest = "*"
 mypy = "*"
 pytest-mock = "*"
+debugpy = "*"
 
 [build-system]
 requires = ["poetry-core"]
