@@ -4,7 +4,7 @@
 import functools
 import logging
 import time
-from typing import Callable
+from importlib import import_module
 
 import pika
 from pika.adapters.asyncio_connection import AsyncioConnection
@@ -13,6 +13,16 @@ from pika.exchange_type import ExchangeType
 from masstransit.models.message import Message
 
 logger = logging.getLogger(__name__)
+
+
+def default_on_message_handler(message, basic_deliver, properties, **kwargs):
+    logger.info(
+        "Received message # %s from %s | %s | %s",
+        basic_deliver.delivery_tag,
+        properties.app_id,
+        message.messageId,
+        message.message,
+    )
 
 
 class RabbitMQConsumer(object):
@@ -36,6 +46,7 @@ class RabbitMQConsumer(object):
         exchange_type: ExchangeType,
         queue: str,
         routing_key: str | None,
+        callback_path: str = "masstransit.consumer.default_on_message_handler",
     ):
         """Create a new instance of the consumer class, passing in the AMQP
         URL used to connect to RabbitMQ.
@@ -59,6 +70,10 @@ class RabbitMQConsumer(object):
         # In production, experiment with higher prefetch values
         # for higher consumer throughput
         self._prefetch_count = 1
+        parts = callback_path.split(".")
+        callback_mod = import_module(".".join(parts[:-1]))
+        callback = getattr(callback_mod, parts[-1])
+        self._on_message_handler = callback
 
     def connect(self):
         """This method connects to RabbitMQ, returning the connection handle.
@@ -338,33 +353,21 @@ class RabbitMQConsumer(object):
         if self._channel:
             self._channel.close()
 
-    def on_message(self, _unused_channel, basic_deliver, properties, body):
+    def on_message(self, channel, basic_deliver, properties, body):
         """Invoked by pika when a message is delivered from RabbitMQ. The
         channel is passed for your convenience. The basic_deliver object that
         is passed in carries the exchange, routing key, delivery tag and
         a redelivered flag for the message. The properties passed in is an
         instance of BasicProperties with the message properties and the body
         is the message that was sent.
-
-        Args:
-          pika: channel.Channel _unused_channel: The channel object
-          pika: Spec.Basic.Deliver: basic_deliver method
-          pika: Spec.BasicProperties: properties
-          bytes: body: The message body
-          _unused_channel: param basic_deliver:
-          properties: param body:
-          basic_deliver:
-          body:
-
-        Returns:
-
         """
         message = Message.model_validate_json(body)
-        logger.info(
-            "Received message # %s from %s: %s",
-            basic_deliver.delivery_tag,
-            properties.app_id,
-            message.messageId,
+        handler = self._on_message_handler or default_on_message_handler
+        handler(
+            message=message,
+            basic_deliver=basic_deliver,
+            properties=properties,
+            channel=channel,
         )
         self.acknowledge_message(basic_deliver.delivery_tag)
 
@@ -446,71 +449,6 @@ class RabbitMQConsumer(object):
             logger.info("Stopped")
 
 
-class BatchRabbitMQConsumer(RabbitMQConsumer):
-    def __init__(
-        self,
-        amqp_url: str,
-        exchange: str,
-        exchange_type: ExchangeType,
-        queue: str,
-        routing_key: str | None,
-        callback: Callable | None = None,
-        batch_size: int = 1000,
-        flush_timeout_ms: int = 1000,
-    ):
-        super().__init__(amqp_url, exchange, exchange_type, queue, routing_key)
-        self._batch_size = batch_size
-        self._flush_timeout = flush_timeout_ms
-        self._callback = callback
-        self._batch = []
-        self._last_flush = self.timestamp()
-
-    @staticmethod
-    def timestamp():
-        return round(time.time() * 1000)
-
-    def on_message(self, channel, basic_deliver, properties, body):
-        message = Message.model_validate_json(body)
-        self._batch.append((message, basic_deliver, properties, channel))
-        if self.should_flush():
-            self.on_batch()
-            self.flush()
-        self.acknowledge_message(basic_deliver.delivery_tag)
-
-    def should_flush(self):
-        ts = self.timestamp()
-        result = len(self._batch) >= self._batch_size or ts - self._last_flush >= self._flush_timeout
-        logger.debug(
-            "should_flush %s: %d, %d s",
-            result,
-            len(self._batch),
-            (ts - self._last_flush) / 1000,
-        )
-        return result
-
-    def on_batch(self):
-        if self._callback:
-            self._callback(self._batch)
-            return
-        if self._batch:
-            logger.info("A batch of %d messages was consummed successfully", len(self._batch))
-        else:
-            logger.info("It's pretty quiet around here.")
-        for message, basic_deliver, properties, _ in self._batch:
-            logger.info(
-                "Received message # %s from %s | %s | %s",
-                basic_deliver.delivery_tag,
-                properties.app_id,
-                message.messageId,
-                message.message,
-            )
-
-    def flush(self):
-        # reset batch queue
-        self._batch = []
-        self._last_flush = self.timestamp()
-
-
 class ReconnectingRabbitMQConsumer:
     """This is a consumer that will reconnect if the nested
     RabbitMQConsumer indicates that a reconnect is necessary.
@@ -523,6 +461,7 @@ class ReconnectingRabbitMQConsumer:
         exchange_type: ExchangeType,
         queue: str,
         routing_key: str | None,
+        callback_path: str = "masstransit.consumer.default_on_message_handler",
         consumer_class=RabbitMQConsumer,
     ):
         self._reconnect_delay = 0

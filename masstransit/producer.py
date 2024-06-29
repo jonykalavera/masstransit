@@ -36,7 +36,7 @@ class RabbitMQProducer:
         }
         mt_message = Message.model_validate(attributes)
         connection = pika.BlockingConnection(
-            pika.ConnectionParameters(self._ampq_url),
+            pika.URLParameters(self._amqp_url),
         )
         channel = connection.channel()
         channel.queue_declare(queue=self._queue)

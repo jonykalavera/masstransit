@@ -1,6 +1,7 @@
 """MassTransit main module"""
 
 import logging
+import logging.config
 
 import typer
 from pika.exchange_type import ExchangeType
@@ -13,8 +14,30 @@ app = typer.Typer()
 
 
 def logging_setup(log_level):
-    LOG_FORMAT = "%(levelname)s |  %(asctime)s | %(name)s.%(funcName)s:" "%(lineno)d | %(message)s"
-    logging.basicConfig(level=log_level, format=LOG_FORMAT)
+    LOGGING = {
+        "version": 1,
+        "disable_existing_loggers": False,
+        "formatters": {
+            "default": {
+                "format": "[%(asctime)s.%(msecs)03d] [%(levelname)s] [%(process)d] [%(name)s] %(message)s",
+                "datefmt": "%Y-%m-%d %H:%M:%S",
+                "class": "logging.Formatter",
+            }
+        },
+        "handlers": {
+            "stdout": {
+                "class": "logging.StreamHandler",
+                "stream": "ext://sys.stdout",
+                "formatter": "default",
+            }
+        },
+        "loggers": {
+            "pika": {"handlers": ["stdout"], "level": logging.ERROR},
+            "": {"handlers": ["stdout"], "level": log_level},
+        },
+    }
+
+    logging.config.dictConfig(LOGGING)
 
 
 @app.command()
@@ -33,6 +56,7 @@ def consume(
         exchange_type,
         queue,
         routing_key,
+        callback_path,
     ).run()
 
 
