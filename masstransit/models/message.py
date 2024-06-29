@@ -1,11 +1,12 @@
 """MassTransit message model."""
 
 import os
+import platform
 import sys
 from datetime import datetime, timedelta
 from typing import Any
 from uuid import uuid4
-import platform
+
 from dateutil.parser import parse
 from pydantic import BaseModel, Field
 

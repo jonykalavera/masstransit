@@ -1,7 +1,9 @@
 import logging
 from typing import Any
+
 import pika
 from pika.exchange_type import ExchangeType
+
 from masstransit.models.contract import Contract
 from masstransit.models.message import Message
 

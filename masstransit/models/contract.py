@@ -1,6 +1,7 @@
 """MassTransit contract model"""
 
 from importlib import import_module
+
 from pydantic import BaseModel
 
 

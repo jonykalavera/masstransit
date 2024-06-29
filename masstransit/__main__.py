@@ -1,12 +1,13 @@
 """MassTransit main module"""
 
 import logging
+
 import typer
 from pika.exchange_type import ExchangeType
 
 from masstransit.consumer import ReconnectingRabbitMQConsumer
-from masstransit.producer import Producer
 from masstransit.models import Contract
+from masstransit.producer import Producer
 
 app = typer.Typer()
 

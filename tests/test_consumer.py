@@ -1,12 +1,14 @@
 """Test masstransit.consumer."""
 
 import pytest
-from masstransit.consumer import RabbitMQConsumer, ReconnectingRabbitMQConsumer
 from pika.exchange_type import ExchangeType
+
+from masstransit.consumer import RabbitMQConsumer, ReconnectingRabbitMQConsumer
 
 
 class TestRabbitMQConsumer:
     """Test case for RabbitMQConsumer."""
+
     amqp_url = "amqp://guest:guest@localhost:5672/%2F"
     exchange = "test_exchange"
     exchange_type = ExchangeType.direct
@@ -45,9 +47,7 @@ class TestRabbitMQConsumer:
         mock_reconnect = mocker.patch.object(RabbitMQConsumer, "reconnect")
 
         mock_connection = mocker.MagicMock()
-        rabbitmq_consumer.on_connection_open_error(
-            mock_connection, Exception("Connection error")
-        )
+        rabbitmq_consumer.on_connection_open_error(mock_connection, Exception("Connection error"))
 
         mock_reconnect.assert_called_once()
 
@@ -56,16 +56,12 @@ class TestRabbitMQConsumer:
 
         rabbitmq_consumer._closing = False
         mock_connection = mocker.MagicMock()
-        rabbitmq_consumer.on_connection_closed(
-            mock_connection, Exception("Connection closed")
-        )
+        rabbitmq_consumer.on_connection_closed(mock_connection, Exception("Connection closed"))
 
         mock_reconnect.assert_called_once()
 
     def test_on_channel_open(self, mocker, rabbitmq_consumer):
-        mock_add_on_channel_close_callback = mocker.patch.object(
-            RabbitMQConsumer, "add_on_channel_close_callback"
-        )
+        mock_add_on_channel_close_callback = mocker.patch.object(RabbitMQConsumer, "add_on_channel_close_callback")
         mock_setup_exchange = mocker.patch.object(RabbitMQConsumer, "setup_exchange")
 
         mock_channel = mocker.MagicMock()
@@ -75,9 +71,7 @@ class TestRabbitMQConsumer:
         mock_setup_exchange.assert_called_once_with(self.exchange)
 
     def test_on_channel_closed(self, mocker, rabbitmq_consumer):
-        mock_close_connection = mocker.patch.object(
-            RabbitMQConsumer, "close_connection"
-        )
+        mock_close_connection = mocker.patch.object(RabbitMQConsumer, "close_connection")
 
         mock_channel = mocker.MagicMock()
         rabbitmq_consumer.on_channel_closed(mock_channel, Exception("Channel closed"))
@@ -87,9 +81,7 @@ class TestRabbitMQConsumer:
     def test_on_exchange_declareok(self, mocker, rabbitmq_consumer):
         mock_setup_queue = mocker.patch.object(RabbitMQConsumer, "setup_queue")
 
-        rabbitmq_consumer.on_exchange_declareok(
-            mocker.MagicMock(), self.exchange
-        )
+        rabbitmq_consumer.on_exchange_declareok(mocker.MagicMock(), self.exchange)
 
         mock_setup_queue.assert_called_once_with(self.queue)
 
@@ -97,9 +89,7 @@ class TestRabbitMQConsumer:
         mocker.patch.object(RabbitMQConsumer, "on_bindok")
         rabbitmq_consumer._channel = mocker.MagicMock()
 
-        rabbitmq_consumer.on_queue_declareok(
-            mocker.MagicMock(), self.queue
-        )
+        rabbitmq_consumer.on_queue_declareok(mocker.MagicMock(), self.queue)
 
         rabbitmq_consumer._channel.queue_bind.assert_called_once()
 
@@ -111,12 +101,8 @@ class TestRabbitMQConsumer:
         mock_start_consuming.assert_called_once()
 
     def test_on_message(self, mocker, rabbitmq_consumer):
-        mock_model_validate_json = mocker.patch(
-            "masstransit.consumer.Message.model_validate_json"
-        )
-        mock_acknowledge_message = mocker.patch.object(
-            RabbitMQConsumer, "acknowledge_message"
-        )
+        mock_model_validate_json = mocker.patch("masstransit.consumer.Message.model_validate_json")
+        mock_acknowledge_message = mocker.patch.object(RabbitMQConsumer, "acknowledge_message")
 
         mock_model_validate_json.return_value = mocker.MagicMock(message="test message")
         rabbitmq_consumer.on_message(
@@ -132,20 +118,14 @@ class TestRabbitMQConsumer:
     def test_on_connection_closed_reconnect(self, mocker, rabbitmq_consumer):
         rabbitmq_consumer._closing = False
         rabbitmq_consumer._connection = mocker.MagicMock()
-        rabbitmq_consumer.on_connection_closed(
-            mocker.MagicMock(), Exception("Connection closed")
-        )
+        rabbitmq_consumer.on_connection_closed(mocker.MagicMock(), Exception("Connection closed"))
 
         assert rabbitmq_consumer.should_reconnect
 
     def test_on_channel_closed_reconnect(self, mocker, rabbitmq_consumer):
-        rabbitmq_consumer._connection = mocker.MagicMock(
-            is_closing=False, is_closed=False
-        )
+        rabbitmq_consumer._connection = mocker.MagicMock(is_closing=False, is_closed=False)
 
-        rabbitmq_consumer.on_channel_closed(
-            mocker.MagicMock(), Exception("Channel closed")
-        )
+        rabbitmq_consumer.on_channel_closed(mocker.MagicMock(), Exception("Channel closed"))
 
         rabbitmq_consumer._connection.close.assert_called_once()
 
@@ -176,9 +156,7 @@ class TestReconnectingRabbitMQConsumer:
         )
         return reconnecting_consumer
 
-    def test_stops_on_keyboard_interrupt(
-        self, reconnecting_consumer, mock_rabbitmq_consumer
-    ):
+    def test_stops_on_keyboard_interrupt(self, reconnecting_consumer, mock_rabbitmq_consumer):
         mock_rabbitmq_consumer.run.side_effect = KeyboardInterrupt()
 
         reconnecting_consumer.run()
@@ -186,9 +164,7 @@ class TestReconnectingRabbitMQConsumer:
         mock_rabbitmq_consumer.run.assert_called_once()
         mock_rabbitmq_consumer.stop.assert_called_once()
 
-    def test_maybe_reconnects_when_consumer_drops(
-        self, reconnecting_consumer, mock_rabbitmq_consumer, mock_sleep
-    ):
+    def test_maybe_reconnects_when_consumer_drops(self, reconnecting_consumer, mock_rabbitmq_consumer, mock_sleep):
         """We expect the consumer will try to reconnect with an increasing delay"""
         mock_rabbitmq_consumer.should_reconnect = True
         mock_rabbitmq_consumer.run.side_effect = [None, KeyboardInterrupt()]
