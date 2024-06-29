@@ -12,10 +12,7 @@ app = typer.Typer()
 
 
 def logging_setup(log_level):
-    LOG_FORMAT = (
-        "%(levelname)s |  %(asctime)s | %(name)s.%(funcName)s:"
-        "%(lineno)d | %(message)s"
-    )
+    LOG_FORMAT = "%(levelname)s |  %(asctime)s | %(name)s.%(funcName)s:" "%(lineno)d | %(message)s"
     logging.basicConfig(level=log_level, format=LOG_FORMAT)
 
 

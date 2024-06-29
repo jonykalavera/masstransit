@@ -27,17 +27,20 @@ class Producer:
         routing_key="",
         message_kwargs: dict[str, Any] | None = None,
     ):
-        obj = Message.model_validate(
-            {
-                "message": message.dict(),
-                "messageType": message.messageType(),
-                **(message_kwargs or {}),
-            }
+        attributes = {
+            "message": message.dict(),
+            "messageType": message.messageType(),
+            **(message_kwargs or {}),
+        }
+        mt_message = Message.model_validate(attributes)
+        connection = pika.BlockingConnection(
+            pika.ConnectionParameters(self._ampq_url),
         )
-        connection = pika.BlockingConnection(pika.ConnectionParameters("localhost"))
         channel = connection.channel()
         channel.queue_declare(queue=self._queue)
         channel.basic_publish(
-            exchange=self._exchange, routing_key=routing_key, body=obj.json()
+            exchange=self._exchange,
+            routing_key=routing_key,
+            body=mt_message.json(),
         )
-        logger.info("Sent message | %s | %s", routing_key, obj.json())
+        logger.info("Sent message | %s | %s", routing_key, mt_message.json())

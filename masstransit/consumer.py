@@ -257,13 +257,9 @@ class RabbitMQConsumer(object):
 
         """
         queue_name = userdata
-        logger.debug(
-            "Binding %s to %s with %s", self._exchange, queue_name, self._routing_key
-        )
+        logger.debug("Binding %s to %s with %s", self._exchange, queue_name, self._routing_key)
         cb = functools.partial(self.on_bindok, userdata=queue_name)
-        self._channel.queue_bind(
-            queue_name, self._exchange, routing_key=self._routing_key, callback=cb
-        )
+        self._channel.queue_bind(queue_name, self._exchange, routing_key=self._routing_key, callback=cb)
 
     def on_bindok(self, _unused_frame, userdata):
         """Invoked by pika when the Queue.Bind method has completed. At this
@@ -287,9 +283,7 @@ class RabbitMQConsumer(object):
         before RabbitMQ will deliver another one. You should experiment
         with different prefetch values to achieve desired performance.
         """
-        self._channel.basic_qos(
-            prefetch_count=self._prefetch_count, callback=self.on_basic_qos_ok
-        )
+        self._channel.basic_qos(prefetch_count=self._prefetch_count, callback=self.on_basic_qos_ok)
 
     def on_basic_qos_ok(self, _unused_frame):
         """Invoked by pika when the Basic.QoS method has completed. At this
@@ -413,9 +407,7 @@ class RabbitMQConsumer(object):
 
         """
         self._consuming = False
-        logger.debug(
-            "RabbitMQ acknowledged the cancellation of the consumer: %s", userdata
-        )
+        logger.debug("RabbitMQ acknowledged the cancellation of the consumer: %s", userdata)
         self.close_channel()
 
     def close_channel(self):
@@ -487,10 +479,7 @@ class BatchRabbitMQConsumer(RabbitMQConsumer):
 
     def should_flush(self):
         ts = self.timestamp()
-        result = (
-            len(self._batch) >= self._batch_size
-            or ts - self._last_flush >= self._flush_timeout
-        )
+        result = len(self._batch) >= self._batch_size or ts - self._last_flush >= self._flush_timeout
         logger.debug(
             "should_flush %s: %d, %d s",
             result,
@@ -504,9 +493,7 @@ class BatchRabbitMQConsumer(RabbitMQConsumer):
             self._callback(self._batch)
             return
         if self._batch:
-            logger.info(
-                "A batch of %d messages was consummed successfully", len(self._batch)
-            )
+            logger.info("A batch of %d messages was consummed successfully", len(self._batch))
         else:
             logger.info("It's pretty quiet around here.")
         for message, basic_deliver, properties, _ in self._batch:
