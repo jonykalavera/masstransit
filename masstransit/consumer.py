@@ -4,6 +4,7 @@
 import functools
 import logging
 import time
+from typing import Callable
 
 import pika
 from pika.adapters.asyncio_connection import AsyncioConnection
@@ -64,7 +65,7 @@ class RabbitMQConsumer(object):
         When the connection is established, the on_connection_open method
         will be invoked by pika.
         """
-        logger.info("Connecting to %s", self._url)
+        logger.debug("Connecting to %s", self._url)
         return AsyncioConnection(
             parameters=pika.URLParameters(self._url),
             on_open_callback=self.on_connection_open,
@@ -94,7 +95,7 @@ class RabbitMQConsumer(object):
         Returns:
 
         """
-        logger.info("Connection opened")
+        logger.debug("Connection opened")
         self.open_channel()
 
     def on_connection_open_error(self, _unused_connection, err):
@@ -149,7 +150,7 @@ class RabbitMQConsumer(object):
         command. When RabbitMQ responds that the channel is open, the
         on_channel_open callback will be invoked by pika.
         """
-        logger.info("Creating a new channel")
+        logger.debug("Creating a new channel")
         self._connection.channel(on_open_callback=self.on_channel_open)
 
     def on_channel_open(self, channel):
@@ -162,7 +163,7 @@ class RabbitMQConsumer(object):
           pika: channel.Channel channel: The channel object
           channel:
         """
-        logger.info("Channel opened")
+        logger.debug("Channel opened")
         self._channel = channel
         self.add_on_channel_close_callback()
         self.setup_exchange(self._exchange)
@@ -171,7 +172,7 @@ class RabbitMQConsumer(object):
         """This method tells pika to call the on_channel_closed method if
         RabbitMQ unexpectedly closes the channel.
         """
-        logger.info("Adding channel close callback")
+        logger.debug("Adding channel close callback")
         self._channel.add_on_close_callback(self.on_channel_closed)
 
     def on_channel_closed(self, channel, reason):
@@ -199,7 +200,7 @@ class RabbitMQConsumer(object):
           str: unicode exchange_name: The name of the exchange to declare
           exchange_name:
         """
-        logger.info("Declaring exchange: %s", exchange_name)
+        logger.debug("Declaring exchange: %s", exchange_name)
         # Note: using functools.partial is not required, it is demonstrating
         # how arbitrary data can be passed to the callback when it is called
         cb = functools.partial(self.on_exchange_declareok, userdata=exchange_name)
@@ -220,7 +221,7 @@ class RabbitMQConsumer(object):
           _unused_frame: param userdata:
           userdata:
         """
-        logger.info("Exchange declared: %s", userdata)
+        logger.debug("Exchange declared: %s", userdata)
         self.setup_queue(self._queue)
 
     def setup_queue(self, queue_name):
@@ -235,7 +236,7 @@ class RabbitMQConsumer(object):
         Returns:
 
         """
-        logger.info("Declaring queue %s", queue_name)
+        logger.debug("Declaring queue %s", queue_name)
         cb = functools.partial(self.on_queue_declareok, userdata=queue_name)
         self._channel.queue_declare(queue=queue_name, callback=cb, durable=True)
 
@@ -256,7 +257,7 @@ class RabbitMQConsumer(object):
 
         """
         queue_name = userdata
-        logger.info(
+        logger.debug(
             "Binding %s to %s with %s", self._exchange, queue_name, self._routing_key
         )
         cb = functools.partial(self.on_bindok, userdata=queue_name)
@@ -277,7 +278,7 @@ class RabbitMQConsumer(object):
         Returns:
 
         """
-        logger.info("Queue bound: %s", userdata)
+        logger.debug("Queue bound: %s", userdata)
         self.set_qos()
 
     def set_qos(self):
@@ -302,7 +303,7 @@ class RabbitMQConsumer(object):
         Returns:
 
         """
-        logger.info("QOS set to: %d", self._prefetch_count)
+        logger.debug("QOS set to: %d", self._prefetch_count)
         self.start_consuming()
 
     def start_consuming(self):
@@ -314,7 +315,7 @@ class RabbitMQConsumer(object):
         cancel consuming. The on_message method is passed in as a callback pika
         will invoke when a message is fully received.
         """
-        logger.info("Issuing consumer related RPC commands")
+        logger.debug("Issuing consumer related RPC commands")
         self.add_on_cancel_callback()
         self._consumer_tag = self._channel.basic_consume(self._queue, self.on_message)
         self.was_consuming = True
@@ -325,7 +326,7 @@ class RabbitMQConsumer(object):
         for some reason. If RabbitMQ does cancel the consumer,
         on_consumer_cancelled will be invoked by pika.
         """
-        logger.info("Adding consumer cancellation callback")
+        logger.debug("Adding consumer cancellation callback")
         self._channel.add_on_cancel_callback(self.on_consumer_cancelled)
 
     def on_consumer_cancelled(self, method_frame):
@@ -369,7 +370,7 @@ class RabbitMQConsumer(object):
             "Received message # %s from %s: %s",
             basic_deliver.delivery_tag,
             properties.app_id,
-            message.message,
+            message.messageId,
         )
         self.acknowledge_message(basic_deliver.delivery_tag)
 
@@ -384,7 +385,7 @@ class RabbitMQConsumer(object):
         Returns:
 
         """
-        logger.info("Acknowledging message %s", delivery_tag)
+        logger.debug("Acknowledging message %s", delivery_tag)
         self._channel.basic_ack(delivery_tag)
 
     def stop_consuming(self):
@@ -392,7 +393,7 @@ class RabbitMQConsumer(object):
         Basic.Cancel RPC command.
         """
         if self._channel:
-            logger.info("Sending a Basic.Cancel RPC command to RabbitMQ")
+            logger.debug("Sending a Basic.Cancel RPC command to RabbitMQ")
             cb = functools.partial(self.on_cancelok, userdata=self._consumer_tag)
             self._channel.basic_cancel(self._consumer_tag, cb)
 
@@ -412,7 +413,7 @@ class RabbitMQConsumer(object):
 
         """
         self._consuming = False
-        logger.info(
+        logger.debug(
             "RabbitMQ acknowledged the cancellation of the consumer: %s", userdata
         )
         self.close_channel()
@@ -453,7 +454,77 @@ class RabbitMQConsumer(object):
             logger.info("Stopped")
 
 
-class ReconnectingRabbitMQConsumer(object):
+class BatchRabbitMQConsumer(RabbitMQConsumer):
+    def __init__(
+        self,
+        amqp_url: str,
+        exchange: str,
+        exchange_type: ExchangeType,
+        queue: str,
+        routing_key: str | None,
+        callback: Callable | None = None,
+        batch_size: int = 1000,
+        flush_timeout_ms: int = 1000,
+    ):
+        super().__init__(amqp_url, exchange, exchange_type, queue, routing_key)
+        self._batch_size = batch_size
+        self._flush_timeout = flush_timeout_ms
+        self._callback = callback
+        self._batch = []
+        self._last_flush = self.timestamp()
+
+    @staticmethod
+    def timestamp():
+        return round(time.time() * 1000)
+
+    def on_message(self, channel, basic_deliver, properties, body):
+        message = Message.model_validate_json(body)
+        self._batch.append((message, basic_deliver, properties, channel))
+        if self.should_flush():
+            self.on_batch()
+            self.flush()
+        self.acknowledge_message(basic_deliver.delivery_tag)
+
+    def should_flush(self):
+        ts = self.timestamp()
+        result = (
+            len(self._batch) >= self._batch_size
+            or ts - self._last_flush >= self._flush_timeout
+        )
+        logger.debug(
+            "should_flush %s: %d, %d s",
+            result,
+            len(self._batch),
+            (ts - self._last_flush) / 1000,
+        )
+        return result
+
+    def on_batch(self):
+        if self._callback:
+            self._callback(self._batch)
+            return
+        if self._batch:
+            logger.info(
+                "A batch of %d messages was consummed successfully", len(self._batch)
+            )
+        else:
+            logger.info("It's pretty quiet around here.")
+        for message, basic_deliver, properties, _ in self._batch:
+            logger.info(
+                "Received message # %s from %s | %s | %s",
+                basic_deliver.delivery_tag,
+                properties.app_id,
+                message.messageId,
+                message.message,
+            )
+
+    def flush(self):
+        # reset batch queue
+        self._batch = []
+        self._last_flush = self.timestamp()
+
+
+class ReconnectingRabbitMQConsumer:
     """This is an example consumer that will reconnect if the nested
     RabbitMQConsumer indicates that a reconnect is necessary.
     """

@@ -1,20 +1,20 @@
 """MassTransit main module"""
 
 import logging
-
+from importlib import import_module
 import typer
 from pika.exchange_type import ExchangeType
 
 from masstransit.consumer import ReconnectingRabbitMQConsumer
-
+from masstransit.producer import Producer
 
 app = typer.Typer()
 
 
 def logging_setup():
     LOG_FORMAT = (
-        "%(levelname) -10s %(asctime)s %(name) -30s %(funcName) "
-        "-35s %(lineno) -5d: %(message)s"
+        "%(levelname)s |  %(asctime)s | %(name)s.%(funcName)s:"
+        "%(lineno)d | %(message)s"
     )
     logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
 
@@ -38,9 +38,22 @@ def consume(
 
 
 @app.command()
-def produce(value: str):
+def produce(
+    exchange: str,
+    queue: str,
+    message: str,
+    url="amqp://guest:guest@localhost:5672/%2F",
+    exchange_type: ExchangeType = ExchangeType.fanout,
+    routing_key: str = "",
+    contract_class_path: str = "masstransit.models.getting_started.GettingStarted",
+):
     """Produce a message"""
-    print(f"Producing {value} not.")
+    parts = contract_class_path.split(".")
+    contract_mod = import_module(".".join(parts[:-1]))
+    contract = getattr(contract_mod, parts[-1])
+    obj = contract.model_validate_json(message)
+    producer = Producer(url, exchange, exchange_type, queue)
+    producer.send(obj, routing_key)
 
 
 @app.callback()
