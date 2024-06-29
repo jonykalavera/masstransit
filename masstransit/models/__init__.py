@@ -4,6 +4,6 @@ from .message import Message
 
 __all__ = [
     "Contract",
-    "Message",
     "GettingStarted",
+    "Message",
 ]
