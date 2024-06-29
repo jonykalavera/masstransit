@@ -8,11 +8,11 @@ POC status.
 
 ```shell
 $ poetry run python -m masstransit --help
-                                                                                              
- Usage: python -m masstransit [OPTIONS] COMMAND [ARGS]...                                     
-                                                                                              
- MassTransit for python.                                                                      
-                                                                                              
+
+ Usage: python -m masstransit [OPTIONS] COMMAND [ARGS]...
+
+ MassTransit for python.
+
 ╭─ Options ──────────────────────────────────────────────────────────────────────────────────╮
 │ --log-level                 TEXT  [default: INFO]                                          │
 │ --install-completion              Install completion for the current shell.                │
@@ -23,4 +23,5 @@ $ poetry run python -m masstransit --help
 ╭─ Commands ─────────────────────────────────────────────────────────────────────────────────╮
 │ consume   Start a message consumer                                                         │
 │ produce   Produce a message                                                                │
-╰────────────────────────────────────────────────────────────────────────────────────────────╯```
+╰────────────────────────────────────────────────────────────────────────────────────────────╯
+```
