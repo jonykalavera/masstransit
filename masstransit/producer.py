@@ -2,6 +2,7 @@ import logging
 from typing import Any
 import pika
 from pika.exchange_type import ExchangeType
+from masstransit.models.contract import Contract
 from masstransit.models.message import Message
 
 logger = logging = logging.getLogger(__name__)
@@ -21,12 +22,15 @@ class Producer:
         self._queue = queue
 
     def send(
-        self, message, routing_key="", message_kwargs: dict[str, Any] | None = None
+        self,
+        message: Contract,
+        routing_key="",
+        message_kwargs: dict[str, Any] | None = None,
     ):
         obj = Message.model_validate(
             {
                 "message": message.dict(),
-                "messageType": [message.__class__.__name__],
+                "messageType": message.messageType(),
                 **(message_kwargs or {}),
             }
         )

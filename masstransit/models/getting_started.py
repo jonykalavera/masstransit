@@ -1,5 +1,5 @@
-from pydantic import BaseModel
+from masstransit.models.contract import Contract
 
 
-class GettingStarted(BaseModel):
+class GettingStarted(Contract):
     Value: str
