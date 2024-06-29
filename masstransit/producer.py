@@ -10,7 +10,7 @@ from masstransit.models.message import Message
 logger = logging = logging.getLogger(__name__)
 
 
-class Producer:
+class RabbitMQProducer:
     def __init__(
         self,
         amqp_url: str,

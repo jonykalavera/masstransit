@@ -7,7 +7,7 @@ from pika.exchange_type import ExchangeType
 
 from masstransit.consumer import ReconnectingRabbitMQConsumer
 from masstransit.models import Contract
-from masstransit.producer import Producer
+from masstransit.producer import RabbitMQProducer
 
 app = typer.Typer()
 
@@ -49,7 +49,7 @@ def produce(
     """Produce a message"""
     contract = Contract.from_import_string(contract_class_path)
     obj = contract.model_validate_json(message)
-    producer = Producer(url, exchange, exchange_type, queue)
+    producer = RabbitMQProducer(url, exchange, exchange_type, queue)
     producer.send(obj, routing_key)
 
 

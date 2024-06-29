@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 class RabbitMQConsumer(object):
-    """This is an example consumer that will handle unexpected interactions
+    """This is a consumer that will handle unexpected interactions
     with RabbitMQ such as channel and connection closures.
 
     If RabbitMQ closes the connection, this class will stop and indicate
@@ -418,7 +418,7 @@ class RabbitMQConsumer(object):
         self._channel.close()
 
     def run(self):
-        """Run the example consumer by connecting to RabbitMQ and then
+        """Run the consumer by connecting to RabbitMQ and then
         starting the IOLoop to block and allow the AsyncioConnection to operate.
         """
         self._connection = self.connect()
@@ -512,7 +512,7 @@ class BatchRabbitMQConsumer(RabbitMQConsumer):
 
 
 class ReconnectingRabbitMQConsumer:
-    """This is an example consumer that will reconnect if the nested
+    """This is a consumer that will reconnect if the nested
     RabbitMQConsumer indicates that a reconnect is necessary.
     """
 
