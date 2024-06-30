@@ -30,10 +30,10 @@ class Message(BaseModel):
     messageId: str = Field(default_factory=lambda: uuid4().hex)
     requestId: str | None = None
     correlationId: str | None = None
-    conversationId: str = None
+    conversationId: str | None = None
     initiatorId: str | None = "masstransit-python"
     sourceAddress: str | None = None
-    destinationAddress: str = None
+    destinationAddress: str | None = None
     responseAddress: str | None = None
     faultAddress: str | None = None
     messageType: list[str] = []

@@ -169,7 +169,12 @@ class TestReconnectingRabbitMQConsumer:
     def reconnecting_consumer_fixture(self, mock_rabbitmq_consumer):
         """ReconnectingRabbitMQConsumer fixture. Test case target."""
         reconnecting_consumer = ReconnectingRabbitMQConsumer(
-            self.amqp_url, self.exchange, self.exchange_type, self.queue, self.routing_key, mock_rabbitmq_consumer
+            self.amqp_url,
+            self.exchange,
+            self.exchange_type,
+            self.queue,
+            self.routing_key,
+            consumer_class=mock_rabbitmq_consumer,
         )
         return reconnecting_consumer
 
