@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 class RabbitMQProducer:
-    """RabbitMQProducer for basic publish."""
+    """RabbitMQ producer for basic publish."""
 
     def __init__(
         self,
