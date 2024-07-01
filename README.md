@@ -1,19 +1,18 @@
 # MassTransit Python
 
-MassTransit for python.
+A Framework to integrate python applications with MassTransit.
 
-# Goals
+## Goals
 
-- [ ] Interoperability with masstransit
-  - [x] basic consumer
-    - messages model
-    - custom message handler function
-  - [x] basic producer
-    - custom contract model
-- [ ] django integration
-- [ ] broker support
-  - [x] rabbitmq
-  - [ ] kafka
+- Integration with [MassTransit](https://masstransit.io/):
+  - [x] Consumer: Implement a basic consumer that handles messages.
+    - [x] Custom `Message` Handler Function to handle incoming messages.
+  - [x] Basic producer: Implement a basic producer
+    - [x] custom `Contract` model
+- [ ] Django Integration: Seamlessly integrate MassTransit with Django applications.
+- Broker Support: Support popular message brokers, including:
+  - [x] RabbitMQ
+  - [ ] Kafka
 
 ## Command Line Interface
 
