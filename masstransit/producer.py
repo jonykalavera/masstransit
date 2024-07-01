@@ -32,7 +32,7 @@ class RabbitMQProducer:
 
     def _get_message(self, message: Contract, message_kwargs: dict[str, Any] | None = None) -> Message:
         attributes = {
-            "message": message.dict(),
+            "message": message.model_dump(),
             "messageType": message.messageType(),
             **(message_kwargs or {}),
         }
@@ -50,7 +50,7 @@ class RabbitMQProducer:
         self.channel.basic_publish(
             exchange=self._exchange,
             routing_key=routing_key,
-            body=message.json(),
+            body=message.model_dump_json(),
         )
         logger.info("Sent message | %s | %s", routing_key, message.json())
 

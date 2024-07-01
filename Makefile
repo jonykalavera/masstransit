@@ -1,5 +1,5 @@
 test:
-	pytest
+	pytest -vv --cov masstransit
 
 format:
 	ruff format masstransit/
