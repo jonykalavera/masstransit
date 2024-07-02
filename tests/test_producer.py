@@ -33,12 +33,14 @@ class TestRabbitMQProducer:
         return blocking_connection
 
     def test_init(self, blocking_connection):
+        """We expect a blocking connection to be established with a channel."""
         producer = RabbitMQProducer(self.amqp_url, self.exchange, self.exchange_type, self.queue)
         blocking_connection.assert_called_once_with(URLParameters(self.amqp_url))
         assert producer.channel == blocking_connection.channel.return_value
         assert producer.connection == blocking_connection
 
     def test_send_contract(self, blocking_connection, message):
+        """We expect to be able to send Contract objects"""
         producer = RabbitMQProducer(self.amqp_url, self.exchange, self.exchange_type, self.queue)
         producer.send_contract(GettingStarted(**self.contract_payload), self.routing_key)
         producer.channel.basic_publish.assert_called_once_with(
@@ -46,6 +48,7 @@ class TestRabbitMQProducer:
         )
 
     def test_send(self, blocking_connection, message):
+        """We expect to be able to send json strings providing a contract_class_path."""
         producer = RabbitMQProducer(self.amqp_url, self.exchange, self.exchange_type, self.queue)
         producer.send(self.message, self.routing_key, self.contract_class_path)
         producer.channel.basic_publish.assert_called_once_with(

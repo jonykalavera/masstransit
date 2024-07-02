@@ -29,7 +29,7 @@ def test_consume(rabbitmq_consumer):
 
 
 def test_produce(rabbitmq_producer):
-    """We expect produce to instanciate the producer and send the message."""
+    """We expect produce to instantiate the producer and send the message."""
     message = '{"Value": "hello world!"}'
     routing_key = "my routing_key"
     contract_class_path = "masstransit.models.getting_started.GettingStarted"

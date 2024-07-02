@@ -55,7 +55,7 @@ class TestRabbitMQConsumer:
         mock_reconnect.assert_called_once()
 
     def test_on_connection_closed(self, mocker, rabbitmq_consumer):
-        """We expect to try to recconnect when connection is closed."""
+        """We expect to try to reconnect when connection is closed."""
         mock_reconnect = mocker.patch.object(RabbitMQConsumer, "reconnect")
 
         rabbitmq_consumer._closing = False
