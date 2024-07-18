@@ -1,1 +1,1 @@
-"""MassTransit for python"""
+"""MassTransit for python."""

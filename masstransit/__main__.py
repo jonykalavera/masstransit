@@ -1,4 +1,4 @@
-"""MassTransit main module"""
+"""MassTransit main module."""
 
 import logging
 import logging.config
@@ -13,6 +13,7 @@ app = typer.Typer()
 
 
 def logging_setup(log_level):
+    """Initializes logging configuration."""
     LOGGING = {
         "version": 1,
         "disable_existing_loggers": False,
@@ -48,7 +49,7 @@ def consume(
     routing_key: str | None = None,
     callback_path: str = "masstransit.consumer.default_callback",
 ):
-    """Start a message consumer"""
+    """Start a message consumer."""
     ReconnectingRabbitMQConsumer(
         url,
         exchange,
@@ -69,7 +70,7 @@ def produce(
     routing_key: str = "",
     contract_class_path: str = "masstransit.models.getting_started.GettingStarted",
 ):
-    """Produce a message"""
+    """Produce a message."""
     RabbitMQProducer(
         url,
         exchange,

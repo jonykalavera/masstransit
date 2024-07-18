@@ -1,3 +1,5 @@
+"""MassTransit Producers."""
+
 import logging
 from typing import Any
 
@@ -20,6 +22,7 @@ class RabbitMQProducer:
         exchange_type: ExchangeType,
         queue: str,
     ):
+        """Initializes RabbitMQProducer instance."""
         self._amqp_url = amqp_url
         self._exchange = exchange
         self._exchange_type = exchange_type

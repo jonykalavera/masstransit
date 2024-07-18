@@ -3,7 +3,8 @@ test:
 
 format:
 	ruff format masstransit/
-	ruff check masstransit/ --fix
+	ruff check masstransit/ --fix-only
 
 lint:
+	ruff check masstransit/
 	mypy masstransit

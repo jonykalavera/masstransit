@@ -12,7 +12,7 @@ from pydantic import BaseModel, Field
 
 
 class Host(BaseModel):
-    """MassTransit message host model"""
+    """MassTransit message host model."""
 
     machineName: str = Field(default_factory=platform.node)
     processName: str = Field(default_factory=lambda: sys.argv[0])
@@ -25,7 +25,7 @@ class Host(BaseModel):
 
 
 class Message(BaseModel):
-    """MassTransit message model"""
+    """MassTransit message model."""
 
     messageId: str = Field(default_factory=lambda: uuid4().hex)
     requestId: str | None = None
@@ -45,9 +45,7 @@ class Message(BaseModel):
 
     @property
     def lag(self) -> timedelta:
-        """Event lag
-
-        Args:
+        """Event lag.
 
         Returns:
           timedelta: between produce time and now
