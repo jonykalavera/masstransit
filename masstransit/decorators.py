@@ -28,9 +28,12 @@ def contract_callback(
     skip_unknown=True,
 ) -> Callable[[Callback], Callback]:
     """Handles  instantiating a contract before executing the callback."""
-    assert contract or contracts, "Must pass either contract or contracts"
-    _contracts = defaultdict(lambda: contract) if contract else contracts
-    assert _contracts, "Must pass at least one contract"
+    if contracts:
+        _contracts = contracts
+    elif contract:
+        _contracts = defaultdict(lambda: contract)
+    else:
+        raise ValueError("Must pass contract or contracts")
     assert all(isinstance(c, Contract) for c in _contracts.values()), "contract values must inherit from Contract"
 
     def _decorator(callback: Callback) -> Callback:
