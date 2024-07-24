@@ -21,6 +21,7 @@ class RabbitMQProducer:
         exchange: str,
         exchange_type: ExchangeType,
         queue: str,
+        durable: bool = True,
     ):
         """Initializes RabbitMQProducer instance."""
         self._amqp_url = amqp_url
@@ -31,7 +32,7 @@ class RabbitMQProducer:
             pika.URLParameters(self._amqp_url),
         )
         self.channel = self.connection.channel()
-        self.channel.queue_declare(queue=self._queue)
+        self.channel.queue_declare(queue=self._queue, durable=durable)
 
     def _get_message(self, message: Contract, message_kwargs: dict[str, Any] | None = None) -> Message:
         attributes = {
