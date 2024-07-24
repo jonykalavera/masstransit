@@ -171,6 +171,13 @@ class TestReconnectingRabbitMQConsumer:
     exchange_type = ExchangeType.fanout
     queue = "test_queue"
     routing_key = ""
+    callback_path = "masstransit.consumer.default_on_message_handler"
+
+    @pytest.fixture(name="callback", autouse=True)
+    def callback_fixture(self, mocker):
+        """Callback mock fixture."""
+        mock = mocker.MagicMock()
+        return mock
 
     @pytest.fixture(name="mock_rabbitmq_consumer", autouse=True)
     def mock_rabbitmq_consumer_fixture(self, mocker):
@@ -195,6 +202,7 @@ class TestReconnectingRabbitMQConsumer:
             self.exchange_type,
             self.queue,
             self.routing_key,
+            self.callback_path,
             consumer_class=mock_rabbitmq_consumer,
         )
         return reconnecting_consumer

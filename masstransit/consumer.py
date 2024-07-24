@@ -428,6 +428,7 @@ class ReconnectingRabbitMQConsumer:
         self._exchange_type = exchange_type
         self._queue = queue
         self._routing_key = routing_key
+        self._callback_path = callback_path
         self._consumer_class = consumer_class
         self._connect_consumer()
 
@@ -451,11 +452,7 @@ class ReconnectingRabbitMQConsumer:
 
     def _connect_consumer(self):
         self._consumer = self._consumer_class(
-            self._amqp_url,
-            self._exchange,
-            self._exchange_type,
-            self._queue,
-            self._routing_key,
+            self._amqp_url, self._exchange, self._exchange_type, self._queue, self._routing_key, self._callback_path
         )
 
     def _get_reconnect_delay(self):
