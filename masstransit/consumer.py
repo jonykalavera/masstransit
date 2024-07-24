@@ -3,6 +3,7 @@
 import functools
 import logging
 import time
+from enum import Enum
 
 import pika
 from pika.adapters.asyncio_connection import AsyncioConnection
@@ -14,7 +15,17 @@ from masstransit.utils import import_string
 logger = logging.getLogger(__name__)
 
 
-def default_on_message_handler(message, basic_deliver, properties, **kwargs):
+class MessageAction(Enum):
+    """Actions that can be taken on messages."""
+
+    ACK = None
+    NACK = 100
+    NACK_AND_REQUEUE = 101
+    REJECT = 200
+    REJECT_AND_REQUEUE = 201
+
+
+def default_on_message_handler(message, basic_deliver, properties, **kwargs) -> MessageAction | None:
     """Logs the messages."""
     logger.info(
         "Received message # %s from %s | %s | %s",
@@ -23,6 +34,7 @@ def default_on_message_handler(message, basic_deliver, properties, **kwargs):
         message.messageId,
         message.message,
     )
+    return MessageAction.ACK
 
 
 class RabbitMQConsumer:
@@ -333,13 +345,31 @@ class RabbitMQConsumer:
         """
         message = Message.model_validate_json(body)
         handler = self._on_message_handler or default_on_message_handler
-        handler(
-            message=message,
-            basic_deliver=basic_deliver,
-            properties=properties,
-            channel=channel,
+        action = MessageAction(
+            handler(
+                message=message,
+                basic_deliver=basic_deliver,
+                properties=properties,
+                channel=channel,
+            )
         )
-        self.acknowledge_message(basic_deliver.delivery_tag)
+        match action:
+            case MessageAction.ACK:
+                self.acknowledge_message(basic_deliver.delivery_tag)
+                return
+            case MessageAction.NACK:
+                self.nack_message(basic_deliver.delivery_tag)
+                return
+            case MessageAction.NACK_AND_REQUEUE:
+                self.nack_message(basic_deliver.delivery_tag, requeue=True)
+                return
+            case MessageAction.REJECT:
+                self.reject_message(basic_deliver.delivery_tag)
+                return
+            case MessageAction.REJECT_AND_REQUEUE:
+                self.reject_message(basic_deliver.delivery_tag, requeue=True)
+                return
+        raise RuntimeError("Unknown message action")
 
     def acknowledge_message(self, delivery_tag):
         """Acknowledge the message delivery from RabbitMQ by sending a Basic.Ack RPC method for the delivery tag.
@@ -350,6 +380,16 @@ class RabbitMQConsumer:
         """
         logger.debug("Acknowledging message %s", delivery_tag)
         self._channel.basic_ack(delivery_tag)
+
+    def nack_message(self, delivery_tag, requeue=False):
+        """Reject the message, such as putting it back on the queue."""
+        logger.debug("Rejecting message %s", delivery_tag)
+        self._channel.basic_nack(delivery_tag, requeue=requeue)
+
+    def reject_message(self, delivery_tag, requeue=False):
+        """Reject the message, such as putting it back on the queue."""
+        logger.debug("Rejecting message %s", delivery_tag)
+        self._channel.basic_reject(delivery_tag, requeue=requeue)
 
     def stop_consuming(self):
         """Tell RabbitMQ that you would like to stop consuming by sending the Basic.Cancel RPC command."""
