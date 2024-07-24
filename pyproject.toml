@@ -11,7 +11,7 @@ line-length = 119
 target-version = "py310"
 
 [tool.ruff.format]
-exclude = ["__pycache__", ".pytest_cache", ".mypy_cache", ".venv", "docs/source/javascript", "automation" ]
+exclude = ["__pycache__", ".pytest_cache", ".mypy_cache", ".venv",]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "PL", "B", "T20", "TCH", "ASYNC", "U", "UP", "LOG", "G", "ERA", "SIM", "D" ]
