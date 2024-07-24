@@ -25,7 +25,7 @@ class MessageAction(Enum):
     REJECT_AND_REQUEUE = 201
 
 
-def default_on_message_handler(message, basic_deliver, properties, **kwargs) -> MessageAction | None:
+def default_callback(message, basic_deliver, properties, **kwargs) -> MessageAction | None:
     """Logs the messages."""
     logger.info(
         "Received message # %s from %s | %s | %s",
@@ -344,7 +344,7 @@ class RabbitMQConsumer:
         is the message that was sent.
         """
         message = Message.model_validate_json(body)
-        handler = self._on_message_handler or default_on_message_handler
+        handler = self._on_message_handler or default_callback
         action = MessageAction(
             handler(
                 message=message,
