@@ -36,7 +36,7 @@ class Message(BaseModel):
     destinationAddress: str | None = None
     responseAddress: str | None = None
     faultAddress: str | None = None
-    messageType: list[str] = []
+    messageType: tuple[str, ...] | None = None
     message: dict | str | int | float | list = Field(default_factory=dict)
     expirationTime: str | None = None
     sentTime: str = Field(default_factory=lambda: datetime.now().isoformat())

@@ -23,7 +23,7 @@ Callback = Callable[P, R]
 
 def contract_callback(
     contract: type["Contract"] | None = None,
-    contracts: dict[str, type["Contract"]] | None = None,
+    contracts: dict[tuple[str, ...] | None, type["Contract"]] | None = None,
     skip_invalid: bool = False,
     skip_unknown=True,
 ) -> Callable[[Callback], Callback]:
@@ -39,7 +39,7 @@ def contract_callback(
     def _decorator(callback: Callback) -> Callback:
         @wraps(callback)
         def _callback(message: "Message", **kwargs):
-            contract = _contracts.get(message.messageType[0])
+            contract = _contracts.get(message.messageType)
             if not contract:
                 if skip_unknown:
                     return
