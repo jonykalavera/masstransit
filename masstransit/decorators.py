@@ -39,12 +39,13 @@ def contract_callback(
     def _decorator(callback: Callback) -> Callback:
         @wraps(callback)
         def _callback(message: "Message", **kwargs):
-            contract = _contracts.get(message.messageType)
-            if not contract:
+            try:
+                contract = _contracts[message.messageType]
+            except KeyError:
                 if skip_unknown:
                     return
                 logger.error("Unknown message type: %s", message.messageType)
-                return
+                raise
             try:
                 payload = contract.model_validate(message.message)
                 callback(payload=payload, message=message, **kwargs)
