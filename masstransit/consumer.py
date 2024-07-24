@@ -3,13 +3,13 @@
 import functools
 import logging
 import time
-from importlib import import_module
 
 import pika
 from pika.adapters.asyncio_connection import AsyncioConnection
 from pika.exchange_type import ExchangeType
 
 from masstransit.models.message import Message
+from masstransit.utils import import_string
 
 logger = logging.getLogger(__name__)
 
@@ -67,10 +67,7 @@ class RabbitMQConsumer:
         # In production, experiment with higher prefetch values
         # for higher consumer throughput
         self._prefetch_count = 1
-        parts = callback_path.split(".")
-        callback_mod = import_module(".".join(parts[:-1]))
-        callback = getattr(callback_mod, parts[-1])
-        self._on_message_handler = callback
+        self._on_message_handler = import_string(callback_path)
 
     def connect(self):
         """Connects to RabbitMQ, returning the connection handle.

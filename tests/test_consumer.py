@@ -6,6 +6,11 @@ from pika.exchange_type import ExchangeType
 from masstransit.consumer import RabbitMQConsumer, ReconnectingRabbitMQConsumer
 
 
+def on_message_callback(message, basic_deliver, properties, **kwargs):
+    """Callback for on_message."""
+    assert message.message == "test message"
+
+
 class TestRabbitMQConsumer:
     """Test case for RabbitMQConsumer."""
 
@@ -15,20 +20,26 @@ class TestRabbitMQConsumer:
     queue = "test_queue"
     routing_key = "test_routing_key"
 
+    @pytest.fixture(name="callback", autouse=True)
+    def callback_fixture(self, mocker):
+        """Callback test target fixture."""
+        callback = mocker.patch("masstransit.consumer.default_on_message_handler", wraps=on_message_callback)
+        return callback
+
     @pytest.fixture(name="rabbitmq_consumer")
     def rabbitmq_consumer_fixture(self):
-        """RabbitMQConsumer test target fixture"""
+        """RabbitMQConsumer test target fixture."""
         return RabbitMQConsumer(self.amqp_url, self.exchange, self.exchange_type, self.queue, self.routing_key)
 
     @pytest.fixture(name="mock_asyncio_connection", autouse=True)
     def mock_asyncio_connection_fixture(self, mocker):
-        """AsyncioConnection mock fixture"""
+        """AsyncioConnection mock fixture."""
         mock_asyncio_connection = mocker.patch("masstransit.consumer.AsyncioConnection")
         mock_asyncio_connection.return_value = mock_asyncio_connection
         return mock_asyncio_connection
 
     def test_connect(self, mocker, rabbitmq_consumer, mock_asyncio_connection):
-        """We expect connect to create the connection"""
+        """We expect connect to create the connection."""
         mock_url_parameters = mocker.patch("masstransit.consumer.pika.URLParameters")
 
         rabbitmq_consumer.connect()
@@ -76,7 +87,7 @@ class TestRabbitMQConsumer:
         mock_setup_exchange.assert_called_once_with(self.exchange)
 
     def test_on_channel_closed(self, mocker, rabbitmq_consumer):
-        """We expect to close the connection when channel closed"""
+        """We expect to close the connection when channel closed."""
         mock_close_connection = mocker.patch.object(RabbitMQConsumer, "close_connection")
 
         mock_channel = mocker.MagicMock()
@@ -109,21 +120,31 @@ class TestRabbitMQConsumer:
 
         mock_start_consuming.assert_called_once()
 
-    def test_on_message(self, mocker, rabbitmq_consumer):
-        """We expect to validate model and acknowledge message when new message arrives."""
+    def test_on_message(self, mocker, rabbitmq_consumer, callback):
+        """We expect to execute callback when new message arrives."""
         mock_model_validate_json = mocker.patch("masstransit.consumer.Message.model_validate_json")
         mock_acknowledge_message = mocker.patch.object(RabbitMQConsumer, "acknowledge_message")
-
         mock_model_validate_json.return_value = mocker.MagicMock(message="test message")
+        channel = mocker.MagicMock()
+        basic_deliver = mocker.MagicMock()
+        properties = mocker.MagicMock()
+        body = b'{"message": "test message"}'
+
         rabbitmq_consumer.on_message(
-            mocker.MagicMock(),
-            mocker.MagicMock(),
-            mocker.MagicMock(),
-            b'{"message": "test message"}',
+            channel,
+            basic_deliver,
+            properties,
+            body,
         )
 
         mock_model_validate_json.assert_called_once()
         mock_acknowledge_message.assert_called_once()
+        callback.assert_called_once_with(
+            message=mock_model_validate_json.return_value,
+            basic_deliver=basic_deliver,
+            properties=properties,
+            channel=channel,
+        )
 
     def test_on_connection_closed_reconnect(self, mocker, rabbitmq_consumer):
         """We expect to reconnect when connection closed unexpectedly."""
@@ -188,7 +209,7 @@ class TestReconnectingRabbitMQConsumer:
         mock_rabbitmq_consumer.stop.assert_called_once()
 
     def test_maybe_reconnects_when_consumer_drops(self, reconnecting_consumer, mock_rabbitmq_consumer, mock_sleep):
-        """We expect the consumer will try to reconnect with an increasing delay"""
+        """We expect the consumer will try to reconnect with an increasing delay."""
         mock_rabbitmq_consumer.should_reconnect = True
         mock_rabbitmq_consumer.run.side_effect = [None, KeyboardInterrupt()]
 
