@@ -87,7 +87,7 @@ def produce(
     )
 
 
-@app.callback(no_args_is_help=True, context_settings={"allow_interspersed_args": True})
+@app.callback(no_args_is_help=True)
 def main(ctx: typer.Context, dsn: str = "amqp://guest:guest@localhost:5672/%2F", log_level: str = "INFO"):
     """MassTransit for python."""
     config = Config(dsn=dsn)
