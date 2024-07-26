@@ -32,9 +32,10 @@ def contract_callback(
         _contracts = contracts
     elif contract:
         _contracts = defaultdict(lambda: contract)
+        _contracts[None] = contract
     else:
         raise ValueError("Must pass contract or contracts")
-    assert all(isinstance(c, Contract) for c in _contracts.values()), "contract values must inherit from Contract"
+    assert all(issubclass(c, Contract) for c in _contracts.values()), "contract values must inherit from Contract"
 
     def _decorator(callback: Callback) -> Callback:
         @wraps(callback)
