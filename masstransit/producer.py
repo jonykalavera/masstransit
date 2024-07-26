@@ -6,8 +6,7 @@ from typing import Any
 import pika
 from pika.exchange_type import ExchangeType
 
-from masstransit.models.contract import Contract
-from masstransit.models.message import Message
+from masstransit.models import Config, Contract, Message
 
 logger = logging.getLogger(__name__)
 
@@ -17,19 +16,19 @@ class RabbitMQProducer:
 
     def __init__(
         self,
-        amqp_url: str,
+        config: Config,
         exchange: str,
         exchange_type: ExchangeType,
         queue: str,
         durable: bool = True,
     ):
         """Initializes RabbitMQProducer instance."""
-        self._amqp_url = amqp_url
+        self._config = config
         self._exchange = exchange
         self._exchange_type = exchange_type
         self._queue = queue
         self.connection = pika.BlockingConnection(
-            pika.URLParameters(self._amqp_url),
+            pika.URLParameters(self._config.dsn),
         )
         self.channel = self.connection.channel()
         self.channel.queue_declare(queue=self._queue, durable=durable)

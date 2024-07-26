@@ -4,13 +4,17 @@ import functools
 import logging
 import time
 from enum import Enum
+from typing import TYPE_CHECKING
 
 import pika
 from pika.adapters.asyncio_connection import AsyncioConnection
 from pika.exchange_type import ExchangeType
 
-from masstransit.models.message import Message
+from masstransit.models import Config, Message
 from masstransit.utils import import_string
+
+if TYPE_CHECKING:
+    from pika.spec import Basic, BasicProperties
 
 logger = logging.getLogger(__name__)
 
@@ -18,14 +22,16 @@ logger = logging.getLogger(__name__)
 class MessageAction(Enum):
     """Actions that can be taken on messages."""
 
-    ACK = None
-    NACK = 100
-    NACK_AND_REQUEUE = 101
-    REJECT = 200
-    REJECT_AND_REQUEUE = 201
+    ACK = 100
+    NACK = 200
+    NACK_AND_REQUEUE = 201
+    REJECT = 400
+    REJECT_AND_REQUEUE = 401
 
 
-def default_callback(message, basic_deliver, properties, **kwargs) -> MessageAction | None:
+def default_callback(
+    message: Message, basic_deliver: "Basic.Deliver", properties: "BasicProperties", **kwargs
+) -> None:
     """Logs the messages."""
     logger.info(
         "Received message # %s from %s | %s | %s",
@@ -34,7 +40,6 @@ def default_callback(message, basic_deliver, properties, **kwargs) -> MessageAct
         message.messageId,
         message.message,
     )
-    return MessageAction.ACK
 
 
 class RabbitMQConsumer:
@@ -55,12 +60,12 @@ class RabbitMQConsumer:
 
     def __init__(
         self,
-        amqp_url: str,
-        exchange: str,
-        exchange_type: ExchangeType,
+        config: Config,
         queue: str,
-        routing_key: str | None,
-        callback_path: str = "masstransit.consumer.default_on_message_handler",
+        exchange: str | None = None,
+        exchange_type: ExchangeType = ExchangeType.fanout,
+        routing_key: str | None = None,
+        callback_path: str = "masstransit.consumer.default_callback",
     ):
         """Create a new instance of the consumer class."""
         self.should_reconnect = False
@@ -70,7 +75,7 @@ class RabbitMQConsumer:
         self._channel = None
         self._closing = False
         self._consumer_tag = None
-        self._url = amqp_url
+        self._config = config
         self._queue = queue
         self._exchange = exchange
         self._exchange_type = exchange_type
@@ -87,9 +92,9 @@ class RabbitMQConsumer:
         When the connection is established, the on_connection_open method
         will be invoked by pika.
         """
-        logger.debug("Connecting to %s", self._url)
+        logger.debug("Connecting to %s", self._config.dsn)
         return AsyncioConnection(
-            parameters=pika.URLParameters(self._url),
+            parameters=pika.URLParameters(self._config.dsn),
             on_open_callback=self.on_connection_open,
             on_open_error_callback=self.on_connection_open_error,
             on_close_callback=self.on_connection_closed,
@@ -179,7 +184,10 @@ class RabbitMQConsumer:
         logger.debug("Channel opened")
         self._channel = channel
         self.add_on_channel_close_callback()
-        self.setup_exchange(self._exchange)
+        if self._exchange:
+            self.setup_exchange(self._exchange)
+        else:
+            self.setup_queue(self._queue)
 
     def add_on_channel_close_callback(self):
         """This method tells pika to call the on_channel_closed method if RabbitMQ unexpectedly closes the channel."""
@@ -263,7 +271,10 @@ class RabbitMQConsumer:
         queue_name = userdata
         logger.debug("Binding %s to %s with %s", self._exchange, queue_name, self._routing_key)
         cb = functools.partial(self.on_bindok, userdata=queue_name)
-        self._channel.queue_bind(queue_name, self._exchange, routing_key=self._routing_key, callback=cb)
+        if self._exchange:
+            self._channel.queue_bind(queue_name, self._exchange, routing_key=self._routing_key, callback=cb)
+        else:
+            self.set_qos()
 
     def on_bindok(self, _unused_frame, userdata):
         """Invoked by pika when the Queue.Bind method has completed.
@@ -352,6 +363,7 @@ class RabbitMQConsumer:
                 properties=properties,
                 channel=channel,
             )
+            or MessageAction.ACK.value
         )
         match action:
             case MessageAction.ACK:
@@ -453,17 +465,17 @@ class ReconnectingRabbitMQConsumer:
 
     def __init__(
         self,
-        amqp_url: str,
-        exchange: str,
-        exchange_type: ExchangeType,
+        config: Config,
         queue: str,
-        routing_key: str | None,
-        callback_path: str = "masstransit.consumer.default_on_message_handler",
+        exchange: str | None = None,
+        exchange_type: ExchangeType = ExchangeType.fanout,
+        routing_key: str | None = None,
+        callback_path: str = "masstransit.consumer.default_callback",
         consumer_class=RabbitMQConsumer,
     ):
         """Initializes the ReconnectingRabbitMQConsumer instance."""
         self._reconnect_delay = 0
-        self._amqp_url = amqp_url
+        self._config = config
         self._exchange = exchange
         self._exchange_type = exchange_type
         self._queue = queue
@@ -492,7 +504,12 @@ class ReconnectingRabbitMQConsumer:
 
     def _connect_consumer(self):
         self._consumer = self._consumer_class(
-            self._amqp_url, self._exchange, self._exchange_type, self._queue, self._routing_key, self._callback_path
+            config=self._config,
+            queue=self._queue,
+            exchange=self._exchange,
+            exchange_type=self._exchange_type,
+            routing_key=self._routing_key,
+            callback_path=self._callback_path,
         )
 
     def _get_reconnect_delay(self):

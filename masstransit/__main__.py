@@ -7,9 +7,11 @@ import typer
 from pika.exchange_type import ExchangeType
 
 from masstransit.consumer import ReconnectingRabbitMQConsumer
+from masstransit.models import Config
 from masstransit.producer import RabbitMQProducer
 
 app = typer.Typer()
+logger = logging.getLogger(__name__)
 
 
 def logging_setup(log_level):
@@ -42,8 +44,9 @@ def logging_setup(log_level):
 
 @app.command()
 def consume(
-    exchange: str,
+    ctx: typer.Context,
     queue: str,
+    exchange: str | None = None,
     url="amqp://guest:guest@localhost:5672/%2F",
     exchange_type: ExchangeType = ExchangeType.fanout,
     routing_key: str | None = None,
@@ -51,10 +54,10 @@ def consume(
 ):
     """Start a message consumer."""
     ReconnectingRabbitMQConsumer(
-        url,
+        ctx.obj["config"],
+        queue,
         exchange,
         exchange_type,
-        queue,
         routing_key,
         callback_path,
     ).run()
@@ -62,6 +65,7 @@ def consume(
 
 @app.command()
 def produce(
+    ctx: typer.Context,
     exchange: str,
     queue: str,
     message: str,
@@ -72,7 +76,7 @@ def produce(
 ):
     """Produce a message."""
     RabbitMQProducer(
-        url,
+        ctx.obj["config"],
         exchange,
         exchange_type,
         queue,
@@ -83,10 +87,13 @@ def produce(
     )
 
 
-@app.callback()
-def main(log_level: str = "INFO"):
+@app.callback(no_args_is_help=True, context_settings={"allow_interspersed_args": True})
+def main(ctx: typer.Context, dsn: str = "amqp://guest:guest@localhost:5672/%2F", log_level: str = "INFO"):
     """MassTransit for python."""
+    config = Config(dsn=dsn)
+    ctx.obj = {"config": config}
     logging_setup(log_level)
+    logger.info("MassTransit for python.")
 
 
 if __name__ == "__main__":
