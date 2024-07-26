@@ -2,12 +2,12 @@ import pytest
 from pika import URLParameters
 from pika.exchange_type import ExchangeType
 
-from masstransit.models import GettingStarted
+from masstransit.models import Config, GettingStarted
 from masstransit.producer import RabbitMQProducer
 
 
 class TestRabbitMQProducer:
-    amqp_url = "amqp://examplehost:5672/"
+    config = Config(dsn="amqp://examplehost:5672/")
     exchange = "my_exchange"
     exchange_type = ExchangeType.direct
     queue = "my_queue"
@@ -34,14 +34,14 @@ class TestRabbitMQProducer:
 
     def test_init(self, blocking_connection):
         """We expect a blocking connection to be established with a channel."""
-        producer = RabbitMQProducer(self.amqp_url, self.exchange, self.exchange_type, self.queue)
-        blocking_connection.assert_called_once_with(URLParameters(self.amqp_url))
+        producer = RabbitMQProducer(self.config, self.exchange, self.exchange_type, self.queue)
+        blocking_connection.assert_called_once_with(URLParameters(self.config.dsn))
         assert producer.channel == blocking_connection.channel.return_value
         assert producer.connection == blocking_connection
 
     def test_send_contract(self, blocking_connection, message):
         """We expect to be able to send Contract objects"""
-        producer = RabbitMQProducer(self.amqp_url, self.exchange, self.exchange_type, self.queue)
+        producer = RabbitMQProducer(self.config, self.exchange, self.exchange_type, self.queue)
         producer.send_contract(GettingStarted(**self.contract_payload), self.routing_key)
         producer.channel.basic_publish.assert_called_once_with(
             body=message.model_dump_json(), exchange=self.exchange, routing_key=self.routing_key
@@ -49,7 +49,7 @@ class TestRabbitMQProducer:
 
     def test_send(self, blocking_connection, message):
         """We expect to be able to send json strings providing a contract_class_path."""
-        producer = RabbitMQProducer(self.amqp_url, self.exchange, self.exchange_type, self.queue)
+        producer = RabbitMQProducer(self.config, self.exchange, self.exchange_type, self.queue)
         producer.send(self.message, self.routing_key, self.contract_class_path)
         producer.channel.basic_publish.assert_called_once_with(
             body=message.model_dump_json(), exchange=self.exchange, routing_key=self.routing_key

@@ -15,7 +15,7 @@ def on_message_callback(message, basic_deliver, properties, **kwargs):
 class TestRabbitMQConsumer:
     """Test case for RabbitMQConsumer."""
 
-    config = Config(url="amqp://guest:guest@localhost:5672/%2F")
+    config = Config(dsn="amqp://guest:guest@localhost:5672/%2F")
     exchange = "test_exchange"
     exchange_type = ExchangeType.direct
     queue = "test_queue"
@@ -30,7 +30,13 @@ class TestRabbitMQConsumer:
     @pytest.fixture(name="rabbitmq_consumer")
     def rabbitmq_consumer_fixture(self):
         """RabbitMQConsumer test target fixture."""
-        return RabbitMQConsumer(self.config, self.exchange, self.exchange_type, self.queue, self.routing_key)
+        return RabbitMQConsumer(
+            config=self.config,
+            exchange=self.exchange,
+            exchange_type=self.exchange_type,
+            queue=self.queue,
+            routing_key=self.routing_key,
+        )
 
     @pytest.fixture(name="mock_asyncio_connection", autouse=True)
     def mock_asyncio_connection_fixture(self, mocker):
@@ -45,7 +51,7 @@ class TestRabbitMQConsumer:
 
         rabbitmq_consumer.connect()
 
-        mock_url_parameters.assert_called_once_with(self.config.url)
+        mock_url_parameters.assert_called_once_with(self.config.dsn)
         mock_asyncio_connection.assert_called_once()
 
     def test_on_connection_open(self, mocker, rabbitmq_consumer):
@@ -167,7 +173,7 @@ class TestRabbitMQConsumer:
 class TestReconnectingRabbitMQConsumer:
     """ReconnectingRabbitMQConsumer test case."""
 
-    amqp_url = "amqp://guest:guest@localhost:5672/%2F"
+    config = Config(dsn="amqp://guest:guest@localhost:5672/%2F")
     exchange = "test_exchange"
     exchange_type = ExchangeType.fanout
     queue = "test_queue"
@@ -198,12 +204,12 @@ class TestReconnectingRabbitMQConsumer:
     def reconnecting_consumer_fixture(self, mock_rabbitmq_consumer):
         """ReconnectingRabbitMQConsumer fixture. Test case target."""
         reconnecting_consumer = ReconnectingRabbitMQConsumer(
-            self.config.url,
-            self.exchange,
-            self.exchange_type,
-            self.queue,
-            self.routing_key,
-            self.callback_path,
+            config=self.config,
+            exchange=self.exchange,
+            exchange_type=self.exchange_type,
+            queue=self.queue,
+            routing_key=self.routing_key,
+            callback_path=self.callback_path,
             consumer_class=mock_rabbitmq_consumer,
         )
         return reconnecting_consumer
