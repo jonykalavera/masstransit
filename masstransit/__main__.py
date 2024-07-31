@@ -9,37 +9,10 @@ from pika.exchange_type import ExchangeType
 from masstransit.consumer import ReconnectingRabbitMQConsumer
 from masstransit.models import Config
 from masstransit.producer import RabbitMQProducer
+from masstransit.utils import logging_setup
 
 app = typer.Typer()
 logger = logging.getLogger(__name__)
-
-
-def logging_setup(log_level):
-    """Initializes logging configuration."""
-    LOGGING = {
-        "version": 1,
-        "disable_existing_loggers": False,
-        "formatters": {
-            "default": {
-                "format": "[%(asctime)s.%(msecs)03d] [%(levelname)s] [%(process)d] [%(name)s] %(message)s",
-                "datefmt": "%Y-%m-%d %H:%M:%S",
-                "class": "logging.Formatter",
-            }
-        },
-        "handlers": {
-            "stdout": {
-                "class": "logging.StreamHandler",
-                "stream": "ext://sys.stdout",
-                "formatter": "default",
-            }
-        },
-        "loggers": {
-            "pika": {"handlers": ["stdout"], "level": logging.ERROR},
-            "": {"handlers": ["stdout"], "level": log_level},
-        },
-    }
-
-    logging.config.dictConfig(LOGGING)
 
 
 @app.command()
@@ -47,7 +20,6 @@ def consume(
     ctx: typer.Context,
     queue: str,
     exchange: str | None = None,
-    url="amqp://guest:guest@localhost:5672/%2F",
     exchange_type: ExchangeType = ExchangeType.fanout,
     routing_key: str | None = None,
     callback_path: str = "masstransit.consumer.default_callback",
@@ -69,7 +41,6 @@ def produce(
     exchange: str,
     queue: str,
     message: str,
-    url="amqp://guest:guest@localhost:5672/%2F",
     exchange_type: ExchangeType = ExchangeType.fanout,
     routing_key: str = "",
     contract_class_path: str = "masstransit.models.getting_started.GettingStarted",
@@ -88,9 +59,9 @@ def produce(
 
 
 @app.callback(no_args_is_help=True)
-def main(ctx: typer.Context, dsn: str = "amqp://guest:guest@localhost:5672/%2F", log_level: str = "INFO"):
+def main(ctx: typer.Context, log_level: str = "INFO"):
     """MassTransit for python."""
-    config = Config(dsn=dsn)
+    config = Config()
     ctx.obj = {"config": config}
     logging_setup(log_level)
     logger.info("MassTransit for python.")

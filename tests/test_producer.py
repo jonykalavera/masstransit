@@ -1,3 +1,5 @@
+"""Producer tests."""
+
 import pytest
 from pika import URLParameters
 from pika.exchange_type import ExchangeType
@@ -7,6 +9,8 @@ from masstransit.producer import RabbitMQProducer
 
 
 class TestRabbitMQProducer:
+    """Test RabbitMQProducer class."""
+
     config = Config(dsn="amqp://examplehost:5672/")
     exchange = "my_exchange"
     exchange_type = ExchangeType.direct
@@ -40,7 +44,7 @@ class TestRabbitMQProducer:
         assert producer.connection == blocking_connection
 
     def test_send_contract(self, blocking_connection, message):
-        """We expect to be able to send Contract objects"""
+        """We expect to be able to send Contract objects."""
         producer = RabbitMQProducer(self.config, self.exchange, self.exchange_type, self.queue)
         producer.send_contract(GettingStarted(**self.contract_payload), self.routing_key)
         producer.channel.basic_publish.assert_called_once_with(

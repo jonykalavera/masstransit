@@ -21,10 +21,10 @@ def rabbitmq_consumer_fixture(mocker):
     return consumer
 
 
-@pytest.fixture(name="logging", autouse=True)
-def logging_fixture(mocker):
-    """Logging mock fixture."""
-    return mocker.patch("masstransit.__main__.logging")
+@pytest.fixture(name="logging_setup", autouse=True)
+def logging_setup_fixture(mocker):
+    """logging_setup mock fixture."""
+    return mocker.patch("masstransit.__main__.logging_setup")
 
 
 @pytest.fixture(name="context")
@@ -57,10 +57,10 @@ def test_produce(context, rabbitmq_producer):
 
 
 @pytest.mark.parametrize("log_level", ["INFO", "WARNING", "ERROR"])
-def test_main(context, log_level, logging):
+def test_main(context, log_level, logging_setup):
     """We expect main to configure the logging."""
     # execute test
     main(context, log_level=log_level)
 
     # assertions
-    logging.config.dictConfig.assert_called_once()
+    logging_setup.assert_called_once_with(log_level)
