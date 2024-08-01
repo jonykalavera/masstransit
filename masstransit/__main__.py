@@ -6,6 +6,7 @@ import logging.config
 import typer
 from pika.exchange_type import ExchangeType
 
+from masstransit import worker as _worker
 from masstransit.consumer import ReconnectingRabbitMQConsumer
 from masstransit.models import Config
 from masstransit.producer import RabbitMQProducer
@@ -58,13 +59,19 @@ def produce(
     )
 
 
+@app.command()
+def worker(ctx: typer.Context, name: str):
+    """List workers."""
+    config = ctx.obj["config"]
+    _worker.start(config, name)
+
+
 @app.callback(no_args_is_help=True)
 def main(ctx: typer.Context, log_level: str = "INFO"):
     """MassTransit for python."""
     config = Config()
     ctx.obj = {"config": config}
     logging_setup(log_level)
-    logger.info("MassTransit for python.")
 
 
 if __name__ == "__main__":
