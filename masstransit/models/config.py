@@ -20,12 +20,20 @@ class ConsumerConfig(BaseModel):
     routing_key: str | None = None
     exchange_type: str = "fanout"
 
+    def display(self) -> str:
+        """Display name."""
+        return (self.name or self.queue).upper()
+
 
 class WorkerConfig(BaseModel):
     """Worker config."""
 
     name: str
     consumers: list[ConsumerConfig]
+
+    def display(self) -> str:
+        """Display name."""
+        return self.name.upper()
 
 
 class Config(BaseSettings):
