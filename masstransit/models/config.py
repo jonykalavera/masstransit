@@ -58,7 +58,7 @@ class Config(BaseSettings):
             YamlConfigSettingsSource(settings_cls),
         )
 
-    def get_worker(self, name: str) -> WorkerConfig | None:
+    def get_worker_config(self, name: str) -> WorkerConfig | None:
         """Get worker config by name."""
         for worker in self.workers or []:
             if worker.name == name:
