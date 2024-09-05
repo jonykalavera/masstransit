@@ -49,7 +49,7 @@ def contract_callback(
                 raise
             try:
                 payload = contract.model_validate(message.message)
-                callback(payload=payload, message=message, **kwargs)
+                return callback(payload=payload, message=message, **kwargs)
             except ValidationError:
                 if skip_invalid:
                     return
