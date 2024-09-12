@@ -120,7 +120,8 @@ class RabbitMQConsumer:
         The connection
           _unused_connection:
         """
-        logger.debug("Connection opened")
+        parameters = pika.URLParameters(self._config.dsn)
+        logger.info("Connection opened: %s", parameters)
         self.open_channel()
 
     def on_connection_open_error(self, _unused_connection, err):
@@ -208,7 +209,7 @@ class RabbitMQConsumer:
           channel: param reason:
           reason:
         """
-        logger.warning("Channel %i was closed: %s", channel, reason)
+        logger.info("Channel %i was closed: %s", channel, reason)
         self.close_connection()
 
     def setup_exchange(self, exchange_name):
@@ -325,6 +326,7 @@ class RabbitMQConsumer:
         self._consumer_tag = self._channel.basic_consume(self._queue, self.on_message)
         self.was_consuming = True
         self._consuming = True
+        logger.info("Consuming queue: %s.", self._queue)
 
     def add_on_cancel_callback(self):
         """Add a callback that will be invoked if RabbitMQ cancels the consumer for some reason.
@@ -341,7 +343,7 @@ class RabbitMQConsumer:
           pika: frame.Method method_frame: The Basic.Cancel frame
           method_frame:
         """
-        logger.info("Consumer was cancelled remotely, shutting down: %r", method_frame)
+        logger.info("Consumer was canceled remotely, shutting down: %r", method_frame)
         if self._channel:
             self._channel.close()
 
@@ -517,6 +519,5 @@ class ReconnectingRabbitMQConsumer:
             self._reconnect_delay = 0
         else:
             self._reconnect_delay += 1
-        if self._reconnect_delay > 30:
-            self._reconnect_delay = 30
+        self._reconnect_delay = min(self._reconnect_delay, 30)
         return self._reconnect_delay

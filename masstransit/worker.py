@@ -46,8 +46,16 @@ def _get_consumer_commands(config: "Config", worker: "WorkerConfig") -> dict[str
         for n in range(1, consumer.number_of_consumers + 1):
             name = f"{worker.display()}:{consumer.display()}-{n:02}"
             command = ["python3", "-m", "masstransit", "consume", consumer.queue]
+            if consumer.exchange:
+                command += ["--exchange", consumer.exchange]
+            if consumer.exchange_type:
+                command += ["--exchange-type", consumer.exchange_type]
+            if consumer.routing_key:
+                command += ["--routing-key", consumer.routing_key]
+            if consumer.callback_path:
+                command += ["--callback-path", consumer.callback_path]
             consumers[name] = command
-            logger.info("Adding consumer %s", name)
+            logger.info("Adding consumer %s: %s", name, " ".join(command))
     return consumers
 
 
