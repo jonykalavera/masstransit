@@ -3,7 +3,9 @@
 import functools
 import logging
 import time
+from asyncio import get_running_loop
 from enum import Enum
+from functools import partial
 from typing import TYPE_CHECKING
 
 import pika
@@ -29,7 +31,7 @@ class MessageAction(Enum):
     REJECT_AND_REQUEUE = 401
 
 
-def default_callback(
+async def default_callback(
     message: Message, basic_deliver: "Basic.Deliver", properties: "BasicProperties", **kwargs
 ) -> None:
     """Logs the messages."""
@@ -358,15 +360,23 @@ class RabbitMQConsumer:
         """
         message = Message.model_validate_json(body)
         handler = self._on_message_handler or default_callback
-        action = MessageAction(
+        task = get_running_loop().create_task(
             handler(
                 message=message,
                 basic_deliver=basic_deliver,
                 properties=properties,
                 channel=channel,
             )
-            or MessageAction.ACK.value
         )
+        task.add_done_callback(partial(self._task_done_callback, basic_deliver=basic_deliver))
+
+    def _task_done_callback(self, task, basic_deliver):
+        result = task.result()
+        try:
+            action = MessageAction(result)
+        except (TypeError, ValueError):
+            action = MessageAction.ACK
+
         match action:
             case MessageAction.ACK:
                 self.acknowledge_message(basic_deliver.delivery_tag)
