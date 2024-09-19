@@ -61,7 +61,7 @@ def produce(
 
 @app.command()
 def worker(ctx: typer.Context, name: str):
-    """List workers."""
+    """Run worker from config."""
     config = ctx.obj["config"]
     _worker.start(config, name)
 

@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING
 import pika
 from pika.adapters.asyncio_connection import AsyncioConnection
 from pika.exchange_type import ExchangeType
+from pydantic import ValidationError
 
 from masstransit.models import Config, Message
 from masstransit.utils import import_string
@@ -371,6 +372,13 @@ class RabbitMQConsumer:
         task.add_done_callback(partial(self._task_done_callback, basic_deliver=basic_deliver))
 
     def _task_done_callback(self, task, basic_deliver):
+        exception = task.exception()
+        if exception:
+            # If the message bus contains a message that throws ValidationError we will stop consuming.
+            if isinstance(exception, ValidationError):
+                logger.error("ABORTING! Message validation error: %s", exception)
+                self.stop()
+            raise exception
         result = task.result()
         try:
             action = MessageAction(result)
