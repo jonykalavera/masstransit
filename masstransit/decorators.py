@@ -21,6 +21,11 @@ R = TypeVar("R")
 Callback = Callable[P, R]
 
 
+async def noop(*args, **kwargs) -> None:
+    """Do Nothing."""
+    return None
+
+
 def contract_callback(
     contract: type["Contract"] | None = None,
     contracts: dict[tuple[str, ...] | None, type["Contract"]] | None = None,
@@ -44,7 +49,7 @@ def contract_callback(
                 contract = _contracts[message.messageType]
             except KeyError:
                 if skip_unknown:
-                    return
+                    return noop()
                 logger.error("Unknown message type: %s", message.messageType)
                 raise
             try:
@@ -52,7 +57,7 @@ def contract_callback(
                 return callback(payload=payload, message=message, **kwargs)
             except ValidationError:
                 if skip_invalid:
-                    return
+                    return noop()
                 raise
 
         return _callback
