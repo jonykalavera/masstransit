@@ -361,24 +361,21 @@ class RabbitMQConsumer:
         """
         message = Message.model_validate_json(body)
         handler = self._on_message_handler or default_callback
-        task = get_running_loop().create_task(
-            handler(
-                message=message,
-                basic_deliver=basic_deliver,
-                properties=properties,
-                channel=channel,
+        try:
+            task = get_running_loop().create_task(
+                handler(
+                    message=message,
+                    basic_deliver=basic_deliver,
+                    properties=properties,
+                    channel=channel,
+                )
             )
-        )
-        task.add_done_callback(partial(self._task_done_callback, basic_deliver=basic_deliver))
+            task.add_done_callback(partial(self._task_done_callback, basic_deliver=basic_deliver))
+        except ValidationError as e:
+            logger.error("ABORTING! %s", e)
+            self.stop()
 
     def _task_done_callback(self, task, basic_deliver):
-        exception = task.exception()
-        if exception:
-            # If the message bus contains a message that throws ValidationError we will stop consuming.
-            if isinstance(exception, ValidationError):
-                logger.error("ABORTING! Message validation error: %s", exception)
-                self.stop()
-            raise exception
         result = task.result()
         try:
             action = MessageAction(result)

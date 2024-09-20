@@ -27,9 +27,9 @@ class RabbitMQProducer:
         self._exchange = exchange
         self._exchange_type = exchange_type
         self._queue = queue
-        self.connection = pika.BlockingConnection(
-            pika.URLParameters(self._config.dsn),
-        )
+        parameters = pika.URLParameters(self._config.dsn)
+        self.connection = pika.BlockingConnection(parameters)
+        logger.info("Connected to RabbitMQ: %s", parameters)
         self.channel = self.connection.channel()
         self.channel.queue_declare(queue=self._queue, durable=durable)
 
@@ -55,7 +55,7 @@ class RabbitMQProducer:
             routing_key=routing_key,
             body=message.model_dump_json(),
         )
-        logger.info("Sent message | %s | %s", routing_key, message.json())
+        logger.info("Sent message to %s | %s | %s", self._queue, routing_key, message.json())
 
     def send(
         self,

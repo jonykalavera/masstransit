@@ -21,6 +21,14 @@ class TestRabbitMQConsumer:
     queue = "test_queue"
     routing_key = "test_routing_key"
 
+    @pytest.fixture(name="get_running_loop")
+    def get_running_loop_fixture(self, mocker):
+        get_running_loop = mocker.patch("masstransit.consumer.get_running_loop")
+        task = mocker.Mock()
+        task.result.return_value = None
+        get_running_loop.return_value.create_task.return_value.add_done_callback = lambda f: f(task)
+        return get_running_loop
+
     @pytest.fixture(name="callback", autouse=True)
     def callback_fixture(self, mocker):
         """Callback test target fixture."""
@@ -127,7 +135,7 @@ class TestRabbitMQConsumer:
 
         mock_start_consuming.assert_called_once()
 
-    def test_on_message(self, mocker, rabbitmq_consumer, callback):
+    def test_on_message(self, mocker, rabbitmq_consumer, callback, get_running_loop):
         """We expect to execute callback when new message arrives."""
         mock_model_validate_json = mocker.patch("masstransit.consumer.Message.model_validate_json")
         mock_acknowledge_message = mocker.patch.object(RabbitMQConsumer, "acknowledge_message")
@@ -144,6 +152,7 @@ class TestRabbitMQConsumer:
             body,
         )
 
+        get_running_loop.assert_called_once_with()
         mock_model_validate_json.assert_called_once()
         mock_acknowledge_message.assert_called_once()
         callback.assert_called_once_with(
