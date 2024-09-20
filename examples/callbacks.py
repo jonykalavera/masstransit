@@ -15,7 +15,7 @@ class SimpleContract(Contract):
     bar: str | None = None
 
 
-@contract_callback(contract=SimpleContract)
+@contract_callback(contract=SimpleContract, skip_invalid=True)
 async def simple_callback(payload, **kwargs):
     """A simple callback function."""
     logger.info("Got payload: %s %s", payload.foo, payload.bar)

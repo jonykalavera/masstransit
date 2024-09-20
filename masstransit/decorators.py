@@ -57,6 +57,7 @@ def contract_callback(
                 return callback(payload=payload, message=message, **kwargs)
             except ValidationError:
                 if skip_invalid:
+                    logger.error("Invalid message: %s for contract %s", message.message, contract)
                     return noop()
                 raise
 
