@@ -44,7 +44,7 @@ def produce(
     message: str,
     exchange_type: ExchangeType = ExchangeType.fanout,
     routing_key: str = "",
-    contract_class_path: str = "masstransit.models.getting_started.GettingStarted",
+    contract_class_path: str = "masstransit.models.Contract",
 ):
     """Produce a message."""
     RabbitMQProducer(

@@ -4,7 +4,8 @@ import pytest
 from pika import URLParameters
 from pika.exchange_type import ExchangeType
 
-from masstransit.models import Config, GettingStarted
+from examples.getting_started import GettingStarted
+from masstransit.models import Config
 from masstransit.producer import RabbitMQProducer
 
 
@@ -18,7 +19,7 @@ class TestRabbitMQProducer:
     contract_payload = {"Value": "Hello world!"}
     message = '{"Value": "Hello world!"}'
     routing_key = "my_routing_key"
-    contract_class_path = "masstransit.models.GettingStarted"
+    contract_class_path = "examples.getting_started.GettingStarted"
 
     @pytest.fixture(name="message")
     def message_fixture(self, mocker):

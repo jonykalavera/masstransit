@@ -47,10 +47,17 @@ def test_produce(context, rabbitmq_producer):
     # setup test
     message = '{"Value": "hello world!"}'
     routing_key = "my routing_key"
-    contract_class_path = "masstransit.models.getting_started.GettingStarted"
+    contract_class_path = "examples.getting_started.GettingStarted"
 
     # execute test
-    produce(context, "getting-started", "getting-started", message, routing_key=routing_key)
+    produce(
+        context,
+        "getting-started",
+        "getting-started",
+        message,
+        routing_key=routing_key,
+        contract_class_path=contract_class_path,
+    )
 
     # assertions
     rabbitmq_producer.send.assert_called_once_with(message, routing_key, contract_class_path=contract_class_path)

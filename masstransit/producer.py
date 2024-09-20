@@ -61,7 +61,7 @@ class RabbitMQProducer:
         self,
         message: str,
         routing_key: str = "",
-        contract_class_path: str = "masstransit.models.GettingStarted",
+        contract_class_path: str = "masstransit.models.Contract",
         message_kwargs: dict[str, Any] | None = None,
     ):
         """Publish message with json message and contract-class-path."""
