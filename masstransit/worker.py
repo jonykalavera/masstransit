@@ -13,15 +13,15 @@ logger = logging.getLogger(__name__)
 
 
 def _run_command(name: str, command: list[str]) -> None:
-    sp.Popen(" ".join(command), stdout=sys.stdout, stderr=sys.stderr, text=True, shell=True).communicate()
+    sp.Popen(command, stdout=sys.stdout, stderr=sys.stderr).communicate()
 
 
-def _get_consumer_commands(config: "Config", worker: "WorkerConfig") -> dict[str, list[str]]:
+def _get_consumer_commands(worker: "WorkerConfig") -> dict[str, list[str]]:
     consumers = {}
     for consumer in worker.consumers:
         for n in range(1, consumer.number_of_consumers + 1):
             name = f"{worker.display()}:{consumer.display()}-{n:02}"
-            command = ["python3", "-m", "masstransit", "consume", consumer.queue]
+            command = ["python", "-u", "-m", "masstransit", "consume", consumer.queue]
             if consumer.exchange:
                 command += ["--exchange", consumer.exchange]
             if consumer.exchange_type:
@@ -45,7 +45,7 @@ def start(config: "Config", name: str):
     if not worker:
         raise ValueError(f"Worker '{name}' not found in config")
     logger.info("Starting worker %s", worker.name)
-    consumers = _get_consumer_commands(config=config, worker=worker)
+    consumers = _get_consumer_commands(worker=worker)
     # Create a thread for each command
     threads = []
     for _name, cmd in consumers.items():

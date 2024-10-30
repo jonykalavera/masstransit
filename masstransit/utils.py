@@ -61,6 +61,11 @@ def logging_setup(log_level="INFO"):
                 "stream": "ext://sys.stderr",
             },
         },
+        "loggers": {
+            "pika": {"handlers": ["stderr"], "level": logging.ERROR},
+            "masstransit": {"handlers": ["stderr", "stdout"], "level": log_level, "propagate": False},
+            "": {"handlers": ["stderr", "stdout"], "level": log_level},
+        },
         "root": {"level": log_level, "handlers": ["stderr", "stdout"]},
     }
 
