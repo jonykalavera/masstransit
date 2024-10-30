@@ -2,12 +2,9 @@
 
 import logging
 import subprocess as sp
+import sys
 import threading
-from functools import lru_cache
-from random import choice
 from typing import TYPE_CHECKING
-
-from masstransit.colors import Background, Foreground, Style
 
 if TYPE_CHECKING:
     from masstransit.models.config import Config, WorkerConfig
@@ -15,29 +12,8 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-OUTPUT_TEMPLATE = "{fg}{bg}⑆ {name}:{end} {stdout}"
-
-
-@lru_cache
-def _random_color(*args, **kwargs) -> tuple[str, str]:
-    bg = choice(list(Background))
-    fg = Foreground.CBLACK if bg != Background.CBLACKBG else Foreground.CWHITE
-    return fg, bg
-
-
-# Define a function to run a command and stream its output
 def _run_command(name: str, command: list[str]) -> None:
-    process = sp.Popen(" ".join(command), stdout=sp.PIPE, stderr=sp.STDOUT, text=True, shell=True)
-    # Stream the output line by line
-    assert process.stdout, "should get stdout reference"
-    fg, bg = _random_color(name)
-    for stdout in iter(process.stdout.readline, ""):
-        if stdout:
-            output = OUTPUT_TEMPLATE.format(fg=fg, bg=bg, name=name, end=Style.CEND, stdout=stdout)
-            print(output, end="")  # noqa: T201
-    if process.stdout:
-        process.stdout.close()
-    process.wait()
+    sp.Popen(" ".join(command), stdout=sys.stdout, stderr=sys.stderr, text=True, shell=True).communicate()
 
 
 def _get_consumer_commands(config: "Config", worker: "WorkerConfig") -> dict[str, list[str]]:

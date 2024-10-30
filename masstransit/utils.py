@@ -23,7 +23,17 @@ def import_string(dotted_path: str) -> Any:
         raise ImportError(f'Module "{module_path}" does not define a "{class_name}" attribute') from e
 
 
-def logging_setup(log_level):
+def filter_maker(level):
+    """Log level X and above filter factory."""
+    level = getattr(logging, level)
+
+    def filter(record):
+        return record.levelno <= level
+
+    return filter
+
+
+def logging_setup(log_level="INFO"):
     """Initializes logging configuration."""
     LOGGING = {
         "version": 1,
@@ -35,17 +45,23 @@ def logging_setup(log_level):
                 "class": "logging.Formatter",
             }
         },
+        "filters": {"warnings_and_below": {"()": f"{__name__}.filter_maker", "level": "WARNING"}},
         "handlers": {
             "stdout": {
                 "class": "logging.StreamHandler",
-                "stream": "ext://sys.stdout",
+                "level": "INFO",
                 "formatter": "default",
-            }
+                "stream": "ext://sys.stdout",
+                "filters": ["warnings_and_below"],
+            },
+            "stderr": {
+                "class": "logging.StreamHandler",
+                "level": "ERROR",
+                "formatter": "default",
+                "stream": "ext://sys.stderr",
+            },
         },
-        "loggers": {
-            "pika": {"handlers": ["stdout"], "level": logging.ERROR},
-            "": {"handlers": ["stdout"], "level": log_level},
-        },
+        "root": {"level": log_level, "handlers": ["stderr", "stdout"]},
     }
 
     logging.config.dictConfig(LOGGING)
