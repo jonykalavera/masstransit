@@ -371,8 +371,8 @@ class RabbitMQConsumer:
                 )
             )
             task.add_done_callback(partial(self._task_done_callback, basic_deliver=basic_deliver))
-        except ValidationError as e:
-            logger.error("ABORTING! %s", e)
+        except ValidationError as err:
+            logger.error("ABORTING! %s Body: %s", err, body)
             self.stop()
 
     def _task_done_callback(self, task, basic_deliver):
