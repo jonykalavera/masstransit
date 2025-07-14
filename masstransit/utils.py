@@ -1,7 +1,11 @@
 """Utils for masstransit."""
 
 import logging
+import os
+from importlib import import_module
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 
 def import_string(dotted_path: str) -> Any:
@@ -9,8 +13,6 @@ def import_string(dotted_path: str) -> Any:
 
     Raise ImportError if the import fails. Stolen from pydantic v1.
     """
-    from importlib import import_module
-
     try:
         module_path, class_name = dotted_path.strip(" ").rsplit(".", 1)
     except ValueError as e:
@@ -31,6 +33,19 @@ def filter_maker(level):
         return record.levelno <= level
 
     return filter
+
+
+def django_setup(django_settings: str | None):
+    """Allows initializing django for the consumer."""
+    if django_settings is None:
+        return
+    try:
+        django = import_module("django")
+        os.environ.setdefault("DJANGO_SETTINGS_MODULE", django_settings)
+        django.setup()
+        logger.info("Django initialized")
+    except ImportError:
+        logger.warning("Could not import django")
 
 
 def logging_setup(log_level="INFO"):
