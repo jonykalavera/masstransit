@@ -68,12 +68,15 @@ def worker(ctx: typer.Context, name: str):
 
 
 @app.callback(no_args_is_help=True)
-def main(ctx: typer.Context, log_level: str = "INFO", django_settings: str | None = None):
+def main(
+    ctx: typer.Context, log_level: str = "INFO", django_settings: str | None = None, configure_logging: bool = True
+):
     """MassTransit for python."""
     config = Config()
     ctx.obj = {"config": config, "log_level": log_level, "django_settings": django_settings}
     django_setup(django_settings)
-    logging_setup(log_level)
+    if configure_logging:
+        logging_setup(log_level)
 
 
 if __name__ == "__main__":
