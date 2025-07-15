@@ -114,23 +114,18 @@ $ python -m masstransit worker auctions
 ...
 ```
 
-### Django example
+### Django support
 
-Put all your callbacks in a single package. Adding the following to your `__init__.py`:
+To use the Django ORM in consumer callbacks, you can use the `--django-settings` argument to specify a Django settings module.
+This will initialize the Django environment as early as possible.
 
-```python
-"""MassTransit entry-point."""
-
-import os
-
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "myapp.settings")
-
-from django import setup as django_setup
-
-django_setup()
-
+```bash
+$ python -m masstransit --django-settings myapp.settings worker auctions
 ```
 
 Make sure to use async callbacks. Newer versions of Django support async models.
 For older versions, you can use the `database_async_to_sync` function from `channels`
 or just use `async_to_sync` and make sure to close any open db connections.
+
+If you prefer to allow django to configure logging, you can use the `--no-configure-logging` argument,
+which will disable the default logging configuration.
