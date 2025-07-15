@@ -24,11 +24,14 @@ def _get_consumer_commands(
         for n in range(1, consumer.number_of_consumers + 1):
             name = f"{worker.display()}:{consumer.display()}-{n:02}"
             command = ["python", "-u", "-m", "masstransit"]
+            # OPTIONS
             if log_level:
                 command += ["--log-level", log_level]
             if django_settings:
                 command += ["--django-settings", django_settings]
+            # COMMAND
             command += ["consume", consumer.queue]
+            # ARGUMENTS
             if consumer.exchange:
                 command += ["--exchange", consumer.exchange]
             if consumer.exchange_type:
