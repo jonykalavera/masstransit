@@ -61,19 +61,22 @@ def produce(
 @app.command()
 def worker(ctx: typer.Context, name: str):
     """Run worker from config."""
-    config = ctx.obj["config"]
-    log_level = ctx.obj["log_level"]
-    django_settings = ctx.obj["django_settings"]
-    _worker.start(config, name, log_level, django_settings)
+    _worker.start(name=name, **ctx.obj)
 
 
 @app.callback(no_args_is_help=True)
 def main(
-    ctx: typer.Context, log_level: str = "INFO", django_settings: str | None = None, configure_logging: bool = True
+    ctx: typer.Context,
+    log_level: str = "INFO",
+    django_settings: str | None = None,
+    configure_logging: bool = True,
 ):
     """MassTransit for python."""
-    config = Config()
-    ctx.obj = {"config": config, "log_level": log_level, "django_settings": django_settings}
+    ctx.obj = {
+        "config": Config(),
+        "log_level": log_level,
+        "django_settings": django_settings,
+    }
     django_setup(django_settings)
     if configure_logging:
         logging_setup(log_level)
