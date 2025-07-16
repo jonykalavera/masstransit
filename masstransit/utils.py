@@ -1,6 +1,7 @@
 """Utils for masstransit."""
 
 import logging
+import logging.config
 import os
 from importlib import import_module
 from typing import Any
@@ -27,18 +28,16 @@ def import_string(dotted_path: str) -> Any:
 
 def filter_maker(level):
     """Log level X and above filter factory."""
-    level = getattr(logging, level)
+    _level = getattr(logging, level)
 
     def filter(record):
-        return record.levelno <= level
+        return record.levelno <= _level
 
     return filter
 
 
-def django_setup(django_settings: str | None):
+def django_setup(django_settings: str):
     """Allows initializing django for the consumer."""
-    if django_settings is None:
-        return
     try:
         django = import_module("django")
         os.environ.setdefault("DJANGO_SETTINGS_MODULE", django_settings)

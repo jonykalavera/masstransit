@@ -27,6 +27,12 @@ def logging_setup_fixture(mocker):
     return mocker.patch("masstransit.__main__.logging_setup")
 
 
+@pytest.fixture(name="django_setup", autouse=True)
+def django_settings_fixture(mocker):
+    """django_setup fixture."""
+    return mocker.patch("masstransit.__main__.django_setup")
+
+
 @pytest.fixture(name="context")
 def context_fixture(mocker):
     """Context mock fixture."""
@@ -63,11 +69,31 @@ def test_produce(context, rabbitmq_producer):
     rabbitmq_producer.send.assert_called_once_with(message, routing_key, contract_class_path=contract_class_path)
 
 
-@pytest.mark.parametrize("log_level", ["INFO", "WARNING", "ERROR"])
-def test_main(context, log_level, logging_setup):
-    """We expect main to configure the logging."""
+def test_main_default(context, logging_setup, django_setup):
+    """We expect main to configure the logging with default level."""
     # execute test
-    main(context, log_level=log_level)
+    main(context)
 
     # assertions
-    logging_setup.assert_called_once_with(log_level)
+    django_setup.assert_not_called()
+    logging_setup.assert_called_once_with("INFO")
+
+
+def test_main_with_django_settings(context, logging_setup, django_setup):
+    """We expect main to configure the django env."""
+    # execute test
+    main(context, django_settings="app.settings", log_level="ERROR")
+
+    # assertions
+    django_setup.assert_called_once_with("app.settings")
+    logging_setup.assert_called_once_with("ERROR")
+
+
+def test_main_no_configure_logging(context, logging_setup, django_setup):
+    """We expect main to not configure the logging."""
+    # execute test
+    main(context, configure_logging=False)
+
+    # assertions
+    django_setup.assert_not_called()
+    logging_setup.assert_not_called()

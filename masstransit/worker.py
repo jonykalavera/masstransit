@@ -17,7 +17,10 @@ def _run_command(name: str, command: list[str]) -> None:
 
 
 def _get_consumer_commands(
-    worker: "WorkerConfig", log_level: str, django_settings: str | None
+    worker: "WorkerConfig",
+    log_level: str,
+    django_settings: str | None,
+    configure_logging: bool = True,
 ) -> dict[str, list[str]]:
     consumers = {}
     for consumer in worker.consumers:
@@ -29,6 +32,8 @@ def _get_consumer_commands(
                 command += ["--log-level", log_level]
             if django_settings:
                 command += ["--django-settings", django_settings]
+            if not configure_logging:
+                command += ["--no-configure-logging"]
             # COMMAND
             command += ["consume", consumer.queue]
             # ARGUMENTS
@@ -45,7 +50,13 @@ def _get_consumer_commands(
     return consumers
 
 
-def start(config: "Config", name: str, log_level: str = "INFO", django_settings: str | None = None) -> None:
+def start(
+    config: "Config",
+    name: str,
+    log_level: str = "INFO",
+    django_settings: str | None = None,
+    configure_logging: bool = True,
+) -> None:
     """Start the worker process.
 
     This works as a multi-process worker. Starting a worker will start all consumers in the worker.
@@ -55,7 +66,12 @@ def start(config: "Config", name: str, log_level: str = "INFO", django_settings:
     if not worker:
         raise ValueError(f"Worker '{name}' not found in config")
     logger.info("Starting worker %s", worker.name)
-    consumers = _get_consumer_commands(worker=worker, log_level=log_level, django_settings=django_settings)
+    consumers = _get_consumer_commands(
+        worker=worker,
+        log_level=log_level,
+        django_settings=django_settings,
+        configure_logging=configure_logging,
+    )
     # Create a thread for each command
     threads = []
     for _name, cmd in consumers.items():

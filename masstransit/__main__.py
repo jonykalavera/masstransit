@@ -77,7 +77,8 @@ def main(
         "log_level": log_level,
         "django_settings": django_settings,
     }
-    django_setup(django_settings)
+    if django_settings:
+        django_setup(django_settings)
     if configure_logging:
         logging_setup(log_level)
 
