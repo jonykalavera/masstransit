@@ -37,7 +37,7 @@ def filter_maker(level):
 
 
 def django_setup(django_settings: str):
-    """Allows initializing django for the consumer."""
+    """Initializes django application settings."""
     try:
         django = import_module("django")
         os.environ.setdefault("DJANGO_SETTINGS_MODULE", django_settings)
