@@ -21,9 +21,8 @@ R = TypeVar("R")
 Callback = Callable[P, R]
 
 
-async def noop(*args, **kwargs) -> None:
+async def noop(*_args, **_kwargs):
     """Do Nothing."""
-    return None
 
 
 def contract_callback(

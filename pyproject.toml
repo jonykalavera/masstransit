@@ -53,6 +53,7 @@ debugpy = "*"
 types-pika = "^1.2.0b1"
 types-python-dateutil = "^2.9.0.20240316"
 pytest-cov = "^5.0.0"
+pytest-asyncio = "^1.0.0"
 
 
 [tool.poetry.group.devel.dependencies]

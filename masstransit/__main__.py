@@ -1,7 +1,6 @@
 """MassTransit main module."""
 
 import logging
-import logging.config
 
 import typer
 from pika.exchange_type import ExchangeType
@@ -10,7 +9,7 @@ from masstransit import worker as _worker
 from masstransit.consumer import ReconnectingRabbitMQConsumer
 from masstransit.models import Config
 from masstransit.producer import RabbitMQProducer
-from masstransit.utils import logging_setup
+from masstransit.utils import django_setup, logging_setup
 
 app = typer.Typer()
 logger = logging.getLogger(__name__)
@@ -62,16 +61,26 @@ def produce(
 @app.command()
 def worker(ctx: typer.Context, name: str):
     """Run worker from config."""
-    config = ctx.obj["config"]
-    _worker.start(config, name)
+    _worker.start(name=name, **ctx.obj)
 
 
 @app.callback(no_args_is_help=True)
-def main(ctx: typer.Context, log_level: str = "INFO"):
+def main(
+    ctx: typer.Context,
+    log_level: str = "INFO",
+    django_settings: str | None = None,
+    configure_logging: bool = True,
+):
     """MassTransit for python."""
-    config = Config()
-    ctx.obj = {"config": config}
-    logging_setup(log_level)
+    ctx.obj = {
+        "config": Config(),
+        "log_level": log_level,
+        "django_settings": django_settings,
+    }
+    if django_settings:
+        django_setup(django_settings)
+    if configure_logging:
+        logging_setup(log_level)
 
 
 if __name__ == "__main__":
