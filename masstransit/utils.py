@@ -42,7 +42,7 @@ def django_setup(django_settings: str):
         django = import_module("django")
         os.environ.setdefault("DJANGO_SETTINGS_MODULE", django_settings)
         django.setup()
-        logger.debug("Django initialized")
+        logger.info("Django initialized: %s", django_settings)
     except ImportError:
         logger.error("Could not import django")
 
