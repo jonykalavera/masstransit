@@ -31,7 +31,7 @@ section-order = ["future", "standard-library", "third-party", "first-party", "lo
 ##############################################################################
 [tool.poetry]
 name = "masstransit"
-version = "0.1.0"
+version = "0.1.1"
 description = "MassTransit for python."
 authors = ["Jony Kalavera <mr.jony@gmail.com>"]
 readme = "README.md"
