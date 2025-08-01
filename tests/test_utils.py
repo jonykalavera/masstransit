@@ -32,7 +32,7 @@ def test_django_setup_configures_django(import_module, setdefault, logger):
     import_module.assert_called_once_with("django")
     setdefault.assert_called_once_with("DJANGO_SETTINGS_MODULE", "app.settings")
     import_module.return_value.setup.assert_called_once_with()
-    logger.debug.assert_called_once_with("Django initialized")
+    logger.info.assert_called_once_with("Django initialized: %s", "app.settings")
 
 
 def test_django_setup_handles_import_error(import_module, setdefault, logger):
