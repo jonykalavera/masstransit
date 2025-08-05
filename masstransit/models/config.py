@@ -1,5 +1,7 @@
 """Configuration model."""
 
+import os
+
 from pydantic import BaseModel, Field
 from pydantic_settings import (
     BaseSettings,
@@ -45,7 +47,6 @@ class Config(BaseSettings):
 
     model_config = SettingsConfigDict(
         env_prefix="MASSTRANSIT_",
-        yaml_file="masstransit.yaml",
     )
 
     @classmethod
@@ -58,12 +59,13 @@ class Config(BaseSettings):
         file_secret_settings: PydanticBaseSettingsSource,
     ) -> tuple[PydanticBaseSettingsSource, ...]:
         """Override default settings sources."""
+        MASSTRANSIT_CONFIG = os.getenv("MASSTRANSIT_CONFIG", "masstransit.yaml")
         return (
             env_settings,
             init_settings,
             dotenv_settings,
             file_secret_settings,
-            YamlConfigSettingsSource(settings_cls),
+            YamlConfigSettingsSource(settings_cls, MASSTRANSIT_CONFIG),
         )
 
     def get_worker_config(self, name: str) -> WorkerConfig | None:

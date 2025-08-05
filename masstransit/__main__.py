@@ -1,6 +1,7 @@
 """MassTransit main module."""
 
 import logging
+import os
 
 import typer
 from pika.exchange_type import ExchangeType
@@ -67,11 +68,14 @@ def worker(ctx: typer.Context, name: str):
 @app.callback(no_args_is_help=True)
 def main(
     ctx: typer.Context,
+    config_path: str | None = None,
     log_level: str = "INFO",
     django_settings: str | None = None,
     configure_logging: bool = True,
 ):
     """MassTransit for python."""
+    if config_path:
+        os.environ.setdefault("MASSTRANSIT_CONFIG", config_path)
     ctx.obj = {
         "config": Config(),
         "log_level": log_level,
