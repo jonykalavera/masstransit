@@ -1,5 +1,7 @@
 """Configuration model."""
 
+import os
+
 from pydantic import BaseModel, Field
 from pydantic_settings import (
     BaseSettings,
@@ -7,6 +9,8 @@ from pydantic_settings import (
     SettingsConfigDict,
     YamlConfigSettingsSource,
 )
+
+MASSTRANSIT_CONFIG = os.getenv("MASSTRANSIT_CONFIG", "masstransit.yaml")
 
 
 class ConsumerConfig(BaseModel):
@@ -45,7 +49,7 @@ class Config(BaseSettings):
 
     model_config = SettingsConfigDict(
         env_prefix="MASSTRANSIT_",
-        yaml_file="masstransit.yaml",
+        yaml_file=MASSTRANSIT_CONFIG,
     )
 
     @classmethod
