@@ -47,5 +47,5 @@ lint:
 
 step-install: install-uv install-python install
 
-step-run-tests: check-format lint test-all
+step-run-tests: uv.check-format uv.lint test-all
 
