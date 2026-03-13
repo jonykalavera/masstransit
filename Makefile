@@ -28,7 +28,7 @@ test-all:
 	uv run -p 3.11 --all-groups -m pytest
 	uv run -p 3.12 --all-groups -m pytest
 	uv run -p 3.13 --all-groups -m pytest
-	uv run -p 3.14 --all-groups -m pytest
+	uv run -p 3.14 --all-groups -m pytest --cov masstransit
 
 format:
 	ruff format masstransit/
