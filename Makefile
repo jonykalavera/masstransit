@@ -17,7 +17,7 @@ uv.%:
 # Developer rules
 # ==============================================================================
 
-install-backend:
+install:
 	uv sync
 
 test:
