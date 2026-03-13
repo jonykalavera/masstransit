@@ -1,5 +1,7 @@
 # MassTransit Python
 
+[![Run all tests](https://github.com/jonykalavera/masstransit/actions/workflows/run-tests.yml/badge.svg)](https://github.com/jonykalavera/masstransit/actions/workflows/run-tests.yml)
+
 A Framework to integrate python applications with MassTransit.
 
 ![Hero Banner](./docs/hero-banner.png)
