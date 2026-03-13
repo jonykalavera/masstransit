@@ -37,10 +37,10 @@ class Message(BaseModel):
     responseAddress: str | None = None
     faultAddress: str | None = None
     messageType: tuple[str, ...] | None = None
-    message: dict | str | int | float | list = Field(default_factory=dict)
+    message: dict | str | int | float | list = Field(default_factory=lambda: {})
     expirationTime: str | None = None
     sentTime: str = Field(default_factory=lambda: datetime.now().isoformat())
-    headers: dict[str, Any] = Field(default_factory=dict)
+    headers: dict[str, Any] = Field(default_factory=lambda: {})
     host: Host = Host()
 
     @property

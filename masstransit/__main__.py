@@ -21,7 +21,7 @@ def consume(
     ctx: typer.Context,
     queue: str,
     exchange: str | None = None,
-    exchange_type: ExchangeType = ExchangeType.fanout,
+    exchange_type: ExchangeType = ExchangeType.fanout,  # type: ignore
     routing_key: str | None = None,
     callback_path: str = "masstransit.consumer.default_callback",
 ):
@@ -42,7 +42,7 @@ def produce(
     exchange: str,
     queue: str,
     message: str,
-    exchange_type: ExchangeType = ExchangeType.fanout,
+    exchange_type: ExchangeType = ExchangeType.fanout,  # type: ignore
     routing_key: str = "",
     contract_class_path: str = "masstransit.models.Contract",
 ):

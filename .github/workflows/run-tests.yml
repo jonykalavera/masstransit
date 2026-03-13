@@ -1,0 +1,31 @@
+name: Run all tests
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize]
+  workflow_call:
+    inputs: {}
+  workflow_dispatch:
+    inputs: {}
+
+permissions:
+  id-token: write
+  contents: write
+  packages: read
+
+concurrency:
+  group: run-all-tests-${{ github.head_ref || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  run-all-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Fetch origin and checkout branch
+        run: git fetch && git checkout ${{ github.head_ref || github.sha }}
+      - name: Run all tests
+        run: make step-install step-run-tests

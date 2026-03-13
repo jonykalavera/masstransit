@@ -55,7 +55,7 @@ class RabbitMQProducer:
             routing_key=routing_key,
             body=message.model_dump_json(),
         )
-        logger.info("Sent message to %s | %s | %s", self._queue, routing_key, message.json())
+        logger.info("Sent message to %s | %s | %s", self._queue, routing_key, message.model_dump_json())
 
     def send(
         self,
