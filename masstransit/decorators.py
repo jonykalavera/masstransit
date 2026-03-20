@@ -54,9 +54,16 @@ def contract_callback(
             try:
                 payload = contract.model_validate(message.message)
                 return callback(payload=payload, message=message, **kwargs)
-            except ValidationError:
+            except ValidationError as e:
                 if skip_invalid:
-                    logger.error("Invalid message: %s for contract %s", message.message, contract)
+                    # Log detailed validation error information
+                    logger.error(
+                        "Invalid message for contract %s: %s\nValidation errors: %s\nMessage content: %s",
+                        contract,
+                        str(e),
+                        e.errors(),
+                        message.message,
+                    )
                     return noop()
                 raise
 
