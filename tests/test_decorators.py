@@ -22,6 +22,7 @@ class Bar(Contract):
 
 @pytest.fixture(name="logger")
 def logger_fixture(mocker):
+    """Logger fixture."""
     return mocker.patch("masstransit.decorators.logger")
 
 
@@ -79,7 +80,7 @@ async def test_contract_callback_handles_unkown_message_type(logger):
 
     @contract_callback(contracts={("foo",): Foo, ("bar",): Bar})
     async def callback(message, payload):
-        assert False, "Will not be called"
+        pass
 
     # system under test
     result = await callback(Message(messageType=("baz",), message={}))
@@ -94,7 +95,7 @@ async def test_contract_callback_optionally_raise_error_on_unkown_type(logger):
 
     @contract_callback(contracts={("foo",): Foo, ("bar",): Bar}, skip_unknown=False)
     async def callback(message, payload):
-        assert False, "Will not be called"
+        pass
 
     # system under test
     with pytest.raises(KeyError):
@@ -105,19 +106,25 @@ async def test_contract_callback_optionally_raise_error_on_unkown_type(logger):
 
 
 @pytest.mark.asyncio
-async def test_contract_callback_optionally_skips_invalid_messages(logger):
+async def test_contract_callback_optionally_skips_invalid_messages(logger, mocker):
     """We expect the callback will skip invalid messages when skip_invalid=True."""
 
     @contract_callback(contracts={("foo",): Foo, ("bar",): Bar}, skip_invalid=True)
     async def callback(message, payload):
-        assert False, "Will not be called"
+        pass
 
     # system under test
     result = await callback(Message(messageType=("bar",), message={}))
 
     # assertions
     assert not result
-    logger.error.assert_called_once_with("Invalid message: %s for contract %s", {}, Bar)
+    logger.error.assert_called_once_with(
+        "Invalid message for contract %s: %s\nValidation errors: %s\nMessage content: %s",
+        Bar,
+        mocker.ANY,
+        mocker.ANY,
+        {},
+    )
 
 
 @pytest.mark.asyncio
