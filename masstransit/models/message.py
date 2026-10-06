@@ -3,7 +3,7 @@
 import os
 import platform
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any
 from uuid import uuid4
 
@@ -39,7 +39,7 @@ class Message(BaseModel):
     messageType: tuple[str, ...] | None = None
     message: dict | str | int | float | list = Field(default_factory=lambda: {})
     expirationTime: str | None = None
-    sentTime: str = Field(default_factory=lambda: datetime.now().isoformat())
+    sentTime: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     headers: dict[str, Any] = Field(default_factory=lambda: {})
     host: Host = Host()
 
@@ -48,10 +48,10 @@ class Message(BaseModel):
         """Event lag.
 
         Returns:
-          timedelta: between produce time and now
-
-        Raises:
-          KeyError: if the `produced_at` key is not present in metadata
+          timedelta: time elapsed since the message was sent
 
         """
-        return parse(self.sentTime) - datetime.now()
+        sent_time = parse(self.sentTime)
+        if sent_time.tzinfo is None:
+            sent_time = sent_time.replace(tzinfo=timezone.utc)
+        return datetime.now(timezone.utc) - sent_time
